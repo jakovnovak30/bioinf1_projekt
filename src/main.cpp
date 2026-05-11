@@ -1,16 +1,17 @@
-#include "CuckooHashTable.hpp"
+#include "CuckooFilter.hpp"
 
 /**
  * Entry point of program
  * TODO: add gtest unit tests for classes
  */
 int main() {
-  CuckooHashTable<int> ht;
+  auto hf = [&](int x) { return x; };
+  CuckooFilter<int> filter(hf);
 
-  ht.insert(5);
-  ht.insert(6);
-  ht.lookup(1);
-  ht.del(1);
+  filter.insert(5);
+  filter.insert(6);
+  filter.lookup(1);
+  filter.del(1);
 
   return 0;
 }
