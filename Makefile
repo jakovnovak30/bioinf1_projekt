@@ -35,3 +35,16 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 
 clean:
 	rm -rf build
+
+docs: $(SRCS) $(wildcard $(IDIR)/*.hpp)
+	@cd docs && doxygen
+
+cleandocs:
+	@rm -rf docs/latex
+	@rm -rf docs/html
+
+cleanall:
+	make clean
+	make cleandocs
+
+.PHONY: cleanall clean cleandocs
