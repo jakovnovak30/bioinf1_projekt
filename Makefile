@@ -47,4 +47,4 @@ cleanall:
 	make clean
 	make cleandocs
 
-.PHONY: cleanall clean cleandocs
+.PHONY: cleanall clean cleandocs docs

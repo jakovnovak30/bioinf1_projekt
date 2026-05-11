@@ -1,5 +1,9 @@
 #include "CuckooHashTable.hpp"
 
+/**
+ * Entry point of program
+ * TODO: add gtest unit tests for classes
+ */
 int main() {
   CuckooHashTable<int> ht;
 
