@@ -29,7 +29,7 @@ public:
     for(size_t i=0;i < this->buckets.size();i++) {
       this->buckets[i] = std::nullopt;
     }
-  };
+  }
 	~CuckooFilter() = default;
 
   /**

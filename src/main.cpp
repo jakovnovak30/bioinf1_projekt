@@ -2,17 +2,18 @@
 #include <functional>
 
 class SimpleHashF : public HashFunction<int> {
-  virtual int hash(int val) {
+  virtual size_t hash(int val) const {
    return val % 11;
   }
-  virtual size_t max_res() {
+  virtual size_t max_res() const {
     return 11;
   }
 };
 
 /**
  * Entry point of program
- * TODO: add gtest unit tests for classes
+ * TODO: add gtest unit tests for class
+ * TODO: add support for buckets with multiple entries
  */
 int main() {
   SimpleHashF hf;

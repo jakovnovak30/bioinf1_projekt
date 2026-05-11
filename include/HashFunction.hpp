@@ -1,8 +1,28 @@
+#pragma once
+
+/**
+ * Interface for hash functions used by CuckooFilter
+ *
+ * @author Jakov Novak
+ */
 template <typename T>
 class HashFunction {
 public:
   HashFunction() = default;
 
-  virtual T hash(int val) = 0;
-  virtual size_t max_res() = 0;
+  /*
+   * hash function implementation
+   * @param val - value to be hashed
+   * @return hash of val
+   * @author Jakov Novak
+   */
+  virtual size_t hash(T val) const = 0;
+
+  /*
+   * Get max size of hashing result
+   *
+   * @return maximum size of hash
+   * @author Jakov Novak
+   */
+  virtual size_t max_res() const = 0;
 };
