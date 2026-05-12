@@ -9,7 +9,7 @@ private:
   public:
     SimpleHashF() = default;
 
-    virtual size_t hash(int val) const override {
+    virtual size_t hash(const int &val) const override {
       return val % 11;
     }
 
