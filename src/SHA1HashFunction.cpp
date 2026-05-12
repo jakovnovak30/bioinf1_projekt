@@ -34,10 +34,10 @@ uint64_t SHA1HashFunction::hash(const std::string &str) const {
 #endif
   EVP_cleanup();  
 
-  return 0;
+  uint64_t hval = *(uint64_t *) md_value;
+  return hval % this->m;
 }
 
 uint64_t SHA1HashFunction::max_res() const {
-  return 1;
+  return this->m;
 }
-
