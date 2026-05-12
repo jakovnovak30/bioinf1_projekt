@@ -105,9 +105,11 @@ public:
     i2 = i1 ^ this->hash_function.hash(fingerprint);
 
     return 
-      this->buckets[i1].has_value() && this->buckets[i1].value() == fingerprint
+      (this->buckets[i1].has_value()
+       && this->buckets[i1].value() == fingerprint)
         ||
-      this->buckets[i2].has_value() && this->buckets[i2].value() == fingerprint;
+      (this->buckets[i2].has_value()
+       && this->buckets[i2].value() == fingerprint);
   }
 
   /**
@@ -148,6 +150,6 @@ public:
 private:
   HashFunction<T> &hash_function;
   FingerprintFunction &fingerprint_function;
-  std::vector<std::optional<size_t>> buckets;
+  std::vector<std::optional<T>> buckets;
   size_t max_num_kicks;
 };

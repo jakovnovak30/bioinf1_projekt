@@ -1,13 +1,13 @@
 DEBUG ?= 1
 
 CXX=g++
-CXXFLAGS=-O2 -std=c++26 -Wall -Wextra
+CXXFLAGS=-O1 -std=c++26 -Wall -Wextra
 TEST_CXXFLAGS=-lgtest
 ifeq ($(DEBUG), 1)
 	CXXFLAGS:=$(CXXFLAGS) -g -DDEBUG
 endif
 LD=g++
-LDFLAGS=-lto
+LDFLAGS=-flto -lcrypto
 
 EXECUTABLE=cuckoo_filter
 SRCDIR=src
@@ -28,7 +28,7 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJS)
 	@echo -e $(GRN)"[linking]" $(RST) $(EXECUTABLE)
-	@-$(LD) $(OBJS) -o $(BUILDDIR)/$(EXECUTABLE)
+	@-$(LD) $(LDFLAGS) $(OBJS) -o $(BUILDDIR)/$(EXECUTABLE)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
 	@mkdir -p build

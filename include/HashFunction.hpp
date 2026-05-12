@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 /**
  * Interface for hash functions used by CuckooFilter
  *
@@ -16,7 +18,7 @@ public:
    * @return hash of val
    * @author Jakov Novak
    */
-  virtual size_t hash(T val) const = 0;
+  virtual uint64_t hash(const T &val) const = 0;
 
   /*
    * Get max size of hashing result
@@ -24,5 +26,5 @@ public:
    * @return maximum size of hash
    * @author Jakov Novak
    */
-  virtual size_t max_res() const = 0;
+  virtual std::size_t max_res() const = 0;
 };
