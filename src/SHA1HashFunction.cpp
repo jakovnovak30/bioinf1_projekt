@@ -30,7 +30,7 @@ uint64_t SHA1HashFunction::hash(const std::string &str) const {
     curr[2] = '\0';
     digest_str += curr;
   }  
-  LOG("Digest is: ", digest_str);
+  LOG("Digest is: {}", digest_str);
 #endif
   EVP_cleanup();  
 
