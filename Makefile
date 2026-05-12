@@ -1,7 +1,8 @@
 DEBUG ?= 1
 
 CXX=g++
-CXXFLAGS=-c -std=c++26
+CXXFLAGS=-O2 -std=c++26 -Wall -Wextra
+TEST_CXXFLAGS=-lgtest
 ifeq ($(DEBUG), 1)
 	CXXFLAGS:=$(CXXFLAGS) -g -DDEBUG
 endif
@@ -10,11 +11,14 @@ LDFLAGS=-lto
 
 EXECUTABLE=cuckoo_filter
 SRCDIR=src
+TESTDIR=tests
 IDIR=include
 BUILDDIR=build
 
 SRCS=$(wildcard $(SRCDIR)/*.cpp)
 OBJS=$(addprefix $(BUILDDIR)/, $(notdir $(SRCS:cpp=o)))
+TEST_SRCS=$(wildcard $(TESTDIR)/*.cpp)
+TESTS=$(addprefix $(BUILDDIR)/tests/, $(notdir $(TEST_SRCS:cpp=o)))
 
 # colors
 RST="\033[0;0m"
@@ -23,15 +27,25 @@ GRN="\033[0;32m"
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJS)
-	@echo "[test] object list:"
-	@echo $(OBJS)
 	@echo -e $(GRN)"[linking]" $(RST) $(EXECUTABLE)
 	@-$(LD) $(OBJS) -o $(BUILDDIR)/$(EXECUTABLE)
 
-$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
 	@mkdir -p build
 	@echo -e $(GRN)"[compiling] "$(RST) $<
-	@-$(CXX) -I$(IDIR) $(CXXFLAGS) -o $@ $<
+	@-$(CXX) -I$(IDIR) $(CXXFLAGS) -c -o $@ $<
+
+run_tests: tests
+	@$(BUILDDIR)/tests/run_all
+
+tests: $(OBJS) $(TESTS)
+	@echo -e $(GRN)"[linking tests] "$(RST) $(notdir $(TESTS))
+	@-$(LD) $(TESTS) $(TEST_CXXFLAGS) -o $(BUILDDIR)/tests/run_all
+
+$(BUILDDIR)/tests/%.o: $(TESTDIR)/%.cpp
+	@mkdir -p build/tests
+	@echo -e $(GRN)"[compiling test] "$(RST) $<
+	@-$(CXX) -I$(IDIR) $(TEST_CXXFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf build
