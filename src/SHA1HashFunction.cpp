@@ -9,6 +9,8 @@ SHA1HashFunction::SHA1HashFunction(size_t m) {
   assert(m > 0);
 }
 
+// reference implementation:
+// https://pragmaticjoe.gitlab.io/posts/2015-02-09-how-to-generate-a-sha1-hash-in-c/
 uint64_t SHA1HashFunction::hash(const std::string &str) const {
   EVP_MD_CTX *mdctx;  
   const EVP_MD *md;  
