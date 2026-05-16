@@ -44,9 +44,14 @@ public:
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
 
-            if (last_level.filters[filter_index]->insert(item, stripped_fp))
+            try
             {
+                last_level.filters[filter_index]->insert(item, stripped_fp);
                 return true;
+            }
+            catch (const std::runtime_error &e)
+            {
+                return false;
             }
 
             appendLevel();
