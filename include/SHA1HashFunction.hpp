@@ -20,6 +20,14 @@ public:
   virtual uint64_t hash(const std::string &str) const override;
 
   /*
+   * Convert back function. converts integer to string
+   *
+   * @return returns integer represented as string
+   * @author Jakov Novak
+   */
+  virtual std::string convert_back(uint64_t val) const override;
+
+  /*
    * Maximum result function
    *
    * @return returns this->m

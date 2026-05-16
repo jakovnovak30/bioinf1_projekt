@@ -1,7 +1,7 @@
 DEBUG ?= 1
 
 CXX=g++
-CXXFLAGS=-O1 -std=c++26 -Wall -Wextra
+CXXFLAGS=-O1 -std=c++26 -Wall -Wextra --pedantic
 TEST_CXXFLAGS=-lgtest
 ifeq ($(DEBUG), 1)
 	CXXFLAGS:=$(CXXFLAGS) -g -DDEBUG

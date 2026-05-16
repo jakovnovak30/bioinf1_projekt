@@ -47,8 +47,7 @@ public:
    * @author Jakov Novak
    */
 	void insert(T x) {
-    size_t fingerprint =
-      this->get_fingerprint(x);
+    T fingerprint = this->get_fingerprint(x);
     auto [i1, i2] = get_indices(x, fingerprint);
 
     /*
@@ -103,21 +102,8 @@ public:
    * @author Jakov Novak
    */
 	bool lookup(T x) const {
-    uint32_t fingerprint = this->get_fingerprint(x);
+    T fingerprint = this->get_fingerprint(x);
     auto [i1, i2] = get_indices(x, fingerprint);
-
-    if (x == 1) {
-      std::cout << "fingerprint: " << fingerprint << std::endl;
-
-      std::cout << "i1: " << i1 << " i2: " << i2 << std::endl;
-      if (this->buckets[i1].has_value())
-        std::cout << "i1 value: " << this->buckets[i1].value() << std::endl;
-      if (this->buckets[i2].has_value())
-        std::cout << "i2 value: " << this->buckets[i2].value() << std::endl;
-    }
-    else {
-      std::cout << "x: " << x << " fingerprint: " << fingerprint << std::endl;
-    }
 
     return 
       (this->buckets[i1].has_value()
@@ -138,7 +124,7 @@ public:
    */
 	void del(T x) {
     // upper 32 bits used as fingerprint
-    uint32_t fingerprint = this->get_fingerprint(x);
+    T fingerprint = this->get_fingerprint(x);
     auto [i1, i2] = get_indices(x, fingerprint);
 
     /**
@@ -162,15 +148,17 @@ public:
   }
 
 private:
-  uint32_t get_fingerprint(T x) const {
+  T get_fingerprint(T x) const {
     return
-      this->hash_function(x) & ((1<<this->fingerprint_bits)-1);
+      this->hash_function.convert_back(
+        this->hash_function(x) & ((1<<this->fingerprint_bits)-1)
+      );
   }
 
-  std::pair<uint32_t, uint32_t> get_indices(T x, uint32_t fingerprint) const {
+  std::pair<uint32_t, uint32_t> get_indices(T x, T fingerprint) const {
     uint32_t i1, i2;
-    i1 = this->hash_function(x) >> 32;
-    i2 = i1 ^ this->hash_function(fingerprint);
+    i1 = (uint32_t) (this->hash_function(x) >> 32) % this->num_buckets;
+    i2 = (uint32_t) (i1 ^ this->hash_function(fingerprint)) % this->num_buckets;
     return { i1, i2 };
   }
 

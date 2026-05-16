@@ -13,6 +13,10 @@ private:
       return val % 200;
     }
 
+    virtual uint32_t convert_back(uint64_t val) const override {
+      return val;
+    }
+
     virtual size_t max_res() const override {
       return 200;
     }

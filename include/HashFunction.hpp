@@ -28,6 +28,11 @@ public:
    */
   uint64_t operator()(const T &val) const { return this->hash(val); }
 
+  /**
+   * Converts hash result back to input format
+   */
+  virtual T convert_back(const uint64_t val) const = 0;
+
   /*
    * Get max size of hashing result
    *
