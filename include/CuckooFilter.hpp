@@ -147,7 +147,6 @@ public:
     throw std::runtime_error("Entry is not in filter");
   }
 
-private:
   virtual T get_fingerprint(T x) const {
     return
       this->hash_function.convert_back(
@@ -155,6 +154,7 @@ private:
       );
   }
 
+protected:
   virtual std::pair<uint32_t, uint32_t> get_indices(T x, T fingerprint) const {
     uint32_t i1, i2;
     i1 = (uint32_t) (this->hash_function(x) >> 32) % this->num_buckets;
