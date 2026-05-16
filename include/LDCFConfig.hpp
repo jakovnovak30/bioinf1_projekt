@@ -9,7 +9,7 @@
  *
  * @author Stjepan Bonić
  */
-struct Config
+struct LDCFConfig
 {
     size_t initialBuckets = 1024;
     size_t fingerprintBits = 16;
@@ -22,7 +22,7 @@ struct Config
  * @author Stjepan Bonić
  */
 template <typename T>
-struct Level
+struct LDCFLevel
 {
     std::vector<std::unique_ptr<CuckooFilter<T>>> filters;
 };
