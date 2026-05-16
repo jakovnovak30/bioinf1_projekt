@@ -1,5 +1,4 @@
 #include "CuckooFilter.hpp"
-#include "CuckooFilterLDCF.hpp"
 #include "SHA1HashFunction.hpp"
 
 #include <print>
@@ -39,8 +38,6 @@ int main() {
 
   std::println("ATTT lookup: {}, ATTC lookup: {}",
       str_filter.lookup("ATTT"), str_filter.lookup("ATTC"));
-
-  CuckooFilterLDCF<std::string> test_filter(sha1, 10);
 
   return 0;
 }
