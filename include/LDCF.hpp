@@ -20,7 +20,7 @@ class LDCF
 public:
     typedef std::function<T(T)> FingerprintFunction;
 
-    LDCF(const Config &config = Config());
+    LDCF(const LDCFConfig &config = Config());
 
     ~LDCF() = default;
 
@@ -104,7 +104,7 @@ private:
      */
     size_t prefixIndex(size_t fp, size_t level) const noexcept;
 
-    Config config;
-    std::vector<Level> levels;
+    LDCFConfig config;
+    std::vector<LDCFLevel> levels;
     FingerprintFunction &fingerprint_function;
 };
