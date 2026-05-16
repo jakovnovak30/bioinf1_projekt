@@ -148,14 +148,14 @@ public:
   }
 
 private:
-  T get_fingerprint(T x) const {
+  virtual T get_fingerprint(T x) const {
     return
       this->hash_function.convert_back(
         this->hash_function(x) & ((1<<this->fingerprint_bits)-1)
       );
   }
 
-  std::pair<uint32_t, uint32_t> get_indices(T x, T fingerprint) const {
+  virtual std::pair<uint32_t, uint32_t> get_indices(T x, T fingerprint) const {
     uint32_t i1, i2;
     i1 = (uint32_t) (this->hash_function(x) >> 32) % this->num_buckets;
     i2 = (uint32_t) (i1 ^ this->hash_function(fingerprint)) % this->num_buckets;
