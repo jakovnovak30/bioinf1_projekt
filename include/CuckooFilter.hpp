@@ -35,6 +35,10 @@ public:
 
     LOG("Setting max bucket size of {}", num_buckets);
     m_buckets.resize(num_buckets);
+    for (auto it = m_buckets.begin(); it != m_buckets.end();++it)
+    {
+      *it = Bucket(m_bucket_size);
+    }
   }
 	~CuckooFilter() = default;
 
@@ -67,7 +71,6 @@ public:
 
     /*
      * Otherwise, we do main loop for cuckoo hashing
-     * TODO: buckets *can* have multiple entries
      */
     size_t i;
     if (rand() % 2)
@@ -80,7 +83,7 @@ public:
       fingerprint = m_buckets[i].swap_random(fingerprint);
 
       // calculate next i
-      i = i ^ m_hash_function(m_hash_function.convert_back(fingerprint));
+      i ^= m_hash_function(m_hash_function.convert_back(fingerprint)) % m_num_buckets;
       // check if bucket[i] has empty entry
       if (!m_buckets[i].is_full()) {
         m_buckets[i].insert(fingerprint);
@@ -124,9 +127,6 @@ public:
     uint32_t fingerprint = get_fingerprint(x);
     auto [i1, i2] = get_indices(x, fingerprint);
 
-    /**
-     * TODO: support for multiple entries in buckets
-     */
     if (m_buckets[i1].contains(fingerprint))
     {
       m_buckets[i1].remove(fingerprint);
@@ -186,6 +186,7 @@ private:
     }
 
     uint32_t swap_random(uint32_t f) {
+      assert(m_fingerprints.size() > 0);
       size_t index = rand() % m_fingerprints.size();
 
       uint32_t oldv = m_fingerprints[index];
