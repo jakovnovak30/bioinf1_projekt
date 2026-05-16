@@ -129,7 +129,6 @@ public:
     if (fingerprint == SIZE_MAX) {
         fingerprint = this->fingerprint_function(x);
     }
-    T fingerprint = this->fingerprint_function(x);
     size_t i1, i2;
     i1 = this->hash_function.hash(x);
     i2 = i1 ^ this->hash_function.hash(fingerprint);
