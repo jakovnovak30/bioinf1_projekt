@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include <LDCF.hpp>
 #include <LDCFConfig.hpp>
 #include <CuckooFilter.hpp>
 
@@ -16,7 +17,7 @@
  * @author Stjepan Bonić
  */
 template <typename T>
-class LDCF
+class LDCF : LDCF<T>
 {
 public:
     typedef std::function<T(T)> FingerprintFunction;
@@ -42,7 +43,7 @@ public:
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
 
-            if (last_level.filters[filter_index].insert(stripped_fp))
+            if (last_level.filters[filter_index].insert(item, stripped_fp))
             {
                 return true;
             }
@@ -53,7 +54,7 @@ public:
         return false;
     }
 
-    bool contains(T item) const
+    bool lookup(T item) const
     {
         const size_t fp = makeFingerprint(item);
 
@@ -64,7 +65,7 @@ public:
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
 
-            if (level.filters[filter_index].contains(stripped_fp))
+            if (level.filters[filter_index].lookup(item, stripped_fp))
             {
                 return true;
             }
@@ -84,7 +85,7 @@ public:
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
 
-            if (level.filters[filter_index].remove(stripped_fp))
+            if (level.filters[filter_index].del(item, stripped_fp))
             {
                 return true;
             }
