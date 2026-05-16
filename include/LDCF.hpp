@@ -39,7 +39,7 @@ public:
      * @returns true if item is in LDCF structure
      * @author Stjepan Bonić
      */
-    bool contains(T item) const;
+    bool lookup(T item) const;
     /**
      * Removes item from the structure
      *
