@@ -41,8 +41,10 @@ public:
    *
    * @author Jakov Novak
    */
-	void insert(T x) {
-    size_t fingerprint = this->fingerprint_function(x);
+	void insert(T x, size_t fingerprint = SIZE_MAX) {
+    if (fingerprint == SIZE_MAX) {
+        fingerprint = this->fingerprint_function(x);
+    }
     size_t i1, i2;
     i1 = this->hash_function.hash(x);
     i2 = i1 ^ this->hash_function.hash(fingerprint);
@@ -98,8 +100,10 @@ public:
    *
    * @author Jakov Novak
    */
-	bool lookup(T x) const {
-    T fingerprint = this->fingerprint_function(x);
+	bool lookup(T x, size_t fingerprint = SIZE_MAX) const {
+    if (fingerprint == SIZE_MAX) {
+        fingerprint = this->fingerprint_function(x);
+    }
     size_t i1, i2;
     i1 = this->hash_function.hash(x);
     i2 = i1 ^ this->hash_function.hash(fingerprint);
@@ -121,7 +125,10 @@ public:
    *
    * @author Jakov Novak
    */
-	void del(T x) {
+	void del(T x, size_t fingerprint = SIZE_MAX) {
+    if (fingerprint == SIZE_MAX) {
+        fingerprint = this->fingerprint_function(x);
+    }
     T fingerprint = this->fingerprint_function(x);
     size_t i1, i2;
     i1 = this->hash_function.hash(x);
