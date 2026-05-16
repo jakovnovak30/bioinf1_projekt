@@ -4,9 +4,11 @@
 #include "HashFunction.hpp"
 
 #include <cassert>
-#include <functional>
+#include <cstdint>
+#include <vector>
 #include <optional>
 #include <stdexcept>
+#include <iostream>
 
 /**
  * Implementation of CuckooFilter
@@ -15,16 +17,19 @@
  */
 template <typename T> class CuckooFilter {
 public:
-  typedef std::function<T(T)> FingerprintFunction;
-
 	CuckooFilter(HashFunction<T> &hash_function,
-               FingerprintFunction &fingerprint_function,
-               size_t max_num_kicks = 2)
-    : hash_function(hash_function), fingerprint_function(fingerprint_function),
-      max_num_kicks(max_num_kicks)
+               uint8_t fingerprint_bits,
+               uint32_t num_buckets = 1024,
+               uint8_t max_num_kicks = 3)
+    : fingerprint_bits(fingerprint_bits),
+      num_buckets(num_buckets),
+      max_num_kicks(max_num_kicks),
+      hash_function(hash_function)
   {
-    LOG("Setting max bucket size of {}", hash_function.max_res());
-    this->buckets.resize(hash_function.max_res());
+    assert(fingerprint_bits < 32);
+
+    LOG("Setting max bucket size of {}", num_buckets);
+    this->buckets.resize(num_buckets);
 
     for(size_t i=0;i < this->buckets.size();i++) {
       this->buckets[i] = std::nullopt;
@@ -42,10 +47,9 @@ public:
    * @author Jakov Novak
    */
 	void insert(T x) {
-    size_t fingerprint = this->fingerprint_function(x);
-    size_t i1, i2;
-    i1 = this->hash_function.hash(x);
-    i2 = i1 ^ this->hash_function.hash(fingerprint);
+    size_t fingerprint =
+      this->get_fingerprint(x);
+    auto [i1, i2] = get_indices(x, fingerprint);
 
     /*
      * If either i1 or i2 is empty, just fill them
@@ -99,10 +103,21 @@ public:
    * @author Jakov Novak
    */
 	bool lookup(T x) const {
-    T fingerprint = this->fingerprint_function(x);
-    size_t i1, i2;
-    i1 = this->hash_function.hash(x);
-    i2 = i1 ^ this->hash_function.hash(fingerprint);
+    uint32_t fingerprint = this->get_fingerprint(x);
+    auto [i1, i2] = get_indices(x, fingerprint);
+
+    if (x == 1) {
+      std::cout << "fingerprint: " << fingerprint << std::endl;
+
+      std::cout << "i1: " << i1 << " i2: " << i2 << std::endl;
+      if (this->buckets[i1].has_value())
+        std::cout << "i1 value: " << this->buckets[i1].value() << std::endl;
+      if (this->buckets[i2].has_value())
+        std::cout << "i2 value: " << this->buckets[i2].value() << std::endl;
+    }
+    else {
+      std::cout << "x: " << x << " fingerprint: " << fingerprint << std::endl;
+    }
 
     return 
       (this->buckets[i1].has_value()
@@ -122,10 +137,9 @@ public:
    * @author Jakov Novak
    */
 	void del(T x) {
-    T fingerprint = this->fingerprint_function(x);
-    size_t i1, i2;
-    i1 = this->hash_function.hash(x);
-    i2 = i1 ^ this->hash_function.hash(fingerprint);
+    // upper 32 bits used as fingerprint
+    uint32_t fingerprint = this->get_fingerprint(x);
+    auto [i1, i2] = get_indices(x, fingerprint);
 
     /**
      * TODO: support for multiple entries in buckets
@@ -148,8 +162,21 @@ public:
   }
 
 private:
-  HashFunction<T> &hash_function;
-  FingerprintFunction &fingerprint_function;
-  std::vector<std::optional<T>> buckets;
+  uint32_t get_fingerprint(T x) const {
+    return
+      this->hash_function(x) & ((1<<this->fingerprint_bits)-1);
+  }
+
+  std::pair<uint32_t, uint32_t> get_indices(T x, uint32_t fingerprint) const {
+    uint32_t i1, i2;
+    i1 = this->hash_function(x) >> 32;
+    i2 = i1 ^ this->hash_function(fingerprint);
+    return { i1, i2 };
+  }
+
+  uint8_t fingerprint_bits;
+  size_t num_buckets;
   size_t max_num_kicks;
+  HashFunction<T> &hash_function;
+  std::vector<std::optional<T>> buckets;
 };

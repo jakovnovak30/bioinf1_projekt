@@ -1,10 +1,8 @@
 #include "CuckooFilter.hpp"
 #include "SHA1HashFunction.hpp"
 
-#include <functional>
-
-class SimpleHashF : public HashFunction<int> {
-  virtual uint64_t hash(const int &val) const {
+class SimpleHashF : public HashFunction<uint32_t> {
+  virtual uint64_t hash(const uint32_t &val) const {
    return val % 11;
   }
   virtual size_t max_res() const {
@@ -19,8 +17,7 @@ class SimpleHashF : public HashFunction<int> {
  */
 int main() {
   SimpleHashF hf;
-  std::function<int(int)> ff = [](int x) { return x; };
-  CuckooFilter<int> filter(hf, ff);
+  CuckooFilter<uint32_t> filter(hf, 10, 100);
 
   filter.insert(5);
   filter.insert(6);
@@ -29,8 +26,9 @@ int main() {
 
 
   // sha1 function
-  SHA1HashFunction sha1(1);
+  SHA1HashFunction sha1 = SHA1HashFunction();
   sha1.hash("ATTC");
+  CuckooFilter<std::string> str_filter(sha1, 10, 20);
 
   return 0;
 }

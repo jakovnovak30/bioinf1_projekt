@@ -8,13 +8,7 @@
  */
 class SHA1HashFunction : public HashFunction<std::string> {
 public:
-  /*
-   * Default constructor of class, accepting size limit argument
-   *
-   * @param m - maximal size method hash should return
-   * @author Jakov Novak
-   */
-  SHA1HashFunction(size_t m);
+  SHA1HashFunction() = default;
 
   /*
    * Hashing method

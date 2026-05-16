@@ -21,6 +21,14 @@ public:
   virtual uint64_t hash(const T &val) const = 0;
 
   /*
+   * Same as calling *hash*
+   *
+   * @see hash
+   * @author Jakov Novak
+   */
+  uint64_t operator()(const T &val) const { return this->hash(val); }
+
+  /*
    * Get max size of hashing result
    *
    * @return maximum size of hash
