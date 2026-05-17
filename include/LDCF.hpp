@@ -1,11 +1,13 @@
 #pragma once
-#include "HashFunction.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 #include <stdexcept>
 #include <functional>
+
+#include "HashFunction.hpp"
 #include <LDCFConfig.hpp>
 
 /**
@@ -171,9 +173,9 @@ private:
         const size_t filter_count = static_cast<size_t>(1ULL << level_index);
 
         LDCFLevel<T> level;
-        level.filters.reserve(filter_count);
+        level.filters.resize(filter_count);
 
-        for (auto it = level.filters.begin(); it != level.filters.end(); ++it)
+        for (size_t i = 0; i < filter_count; i++)
         {
             LDCFConfig cf_config = m_config;
 
@@ -185,8 +187,9 @@ private:
 
             cf_config.fingerprintBits -= level_index;
 
-            // TODO: more config options? or we just use default bucket size, etc.
-            *it = std::make_unique<CuckooFilter<T>>(m_hash_function, cf_config.fingerprintBits);
+            level.filters[i] = std::make_unique<CuckooFilter<T>>(
+                m_hash_function,
+                cf_config.fingerprintBits);
         }
 
         m_levels.emplace_back(std::move(level));
