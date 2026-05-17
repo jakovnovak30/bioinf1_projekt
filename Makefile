@@ -4,22 +4,25 @@ CXX=g++
 CXXFLAGS=-O1 -std=c++26 -Wall -Wextra --pedantic
 LDFLAGS=-flto
 TEST_CXXFLAGS=-g
-TEST_LDFLAGS=-lgtest -lgtest_main -pthread
+TEST_LDFLAGS=-lgtest -lgtest_main -pthread -lcrypto
 ifeq ($(DEBUG), 1)
 	CXXFLAGS:=$(CXXFLAGS) -g -DDEBUG
 endif
 LD=g++
 LDFLAGS=-flto -lcrypto
 
-APP_OBJS=$(filter-out $(BUILDDIR)/main.o, $(OBJS))
+# detect OS
+UNAME_S := $(shell uname -s)
+ifneq ($(UNAME_S), Linux)
+	# NOTE: no windows support
 
-# macOS config for openssl
-CXXFLAGS += -I/opt/homebrew/include
-LDFLAGS += -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto
-
-# macOS config for google tests
-TEST_CXXFLAGS += -I/opt/homebrew/include
-TEST_LDFLAGS += -L/opt/homebrew/lib
+	# macOS config for openssl
+	CXXFLAGS += -I/opt/homebrew/include
+	LDFLAGS += -L/opt/homebrew/opt/openssl@3/lib -lssl
+	# macOS config for google tests
+	TEST_CXXFLAGS += -I/opt/homebrew/include
+	TEST_LDFLAGS += -L/opt/homebrew/lib
+endif
 
 EXECUTABLE=cuckoo_filter
 SRCDIR=src
@@ -29,6 +32,7 @@ BUILDDIR=build
 
 SRCS=$(wildcard $(SRCDIR)/*.cpp)
 OBJS=$(addprefix $(BUILDDIR)/, $(notdir $(SRCS:cpp=o)))
+OBJS_NO_MAIN=$(filter-out $(wildcard $(BUILDDIR)/*main.o), $(OBJS))
 TEST_SRCS=$(wildcard $(TESTDIR)/*.cpp)
 TESTS=$(addprefix $(BUILDDIR)/tests/, $(notdir $(TEST_SRCS:cpp=o)))
 
@@ -50,9 +54,9 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
 run_tests: tests
 	@$(BUILDDIR)/tests/run_all
 
-tests: $(APP_OBJS) $(TESTS)
+tests: $(OBJS_NO_MAIN) $(TESTS)
 	@echo -e $(GRN)"[linking tests] "$(RST) $(notdir $(TESTS))
-	@-$(LD) $(TESTS) $(APP_OBJS) $(LDFLAGS) $(TEST_LDFLAGS) -o $(BUILDDIR)/tests/run_all
+	@-$(LD) $(TESTS) $(OBJS_NO_MAIN) $(TEST_CXXFLAGS) $(TEST_LDFLAGS) -o $(BUILDDIR)/tests/run_all
 
 $(BUILDDIR)/tests/%.o: $(TESTDIR)/%.cpp
 	@mkdir -p build/tests

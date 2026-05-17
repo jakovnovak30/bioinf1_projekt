@@ -32,7 +32,7 @@ int main() {
   filter.del(6);
 
   std::function<uint32_t(uint32_t)> ff = [](uint32_t x) { return x; };
-  LDCF<uint32_t> ldcf = LDCF<uint32_t>(hf, ff);
+  LDCF<uint32_t> ldcf(hf, ff);
 
   ldcf.insert(6);
 

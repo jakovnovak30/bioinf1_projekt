@@ -21,7 +21,7 @@
 template <typename T> class CuckooFilter {
 public:
 	CuckooFilter(HashFunction<T> &hash_function,
-               uint8_t fingerprint_bits,
+               uint8_t fingerprint_bits = 10,
                uint32_t num_buckets = 1024,
                uint8_t bucket_size = 4,
                uint8_t max_num_kicks = 3)
@@ -64,6 +64,14 @@ public:
    */
 	void insert(T entry, uint32_t fingerprint) {
     auto [i1, i2] = get_indices(entry, fingerprint);
+
+    /**
+     * If we already have the fingerprint,
+     * return
+     */
+    if (m_buckets[i1].contains(fingerprint) ||
+        m_buckets[i2].contains(fingerprint))
+      return;
 
     /*
      * If either i1 or i2 is empty, just fill them
@@ -202,7 +210,7 @@ private:
       if (m_fingerprints.size() == m_max_n)
         return false;
 
-      m_fingerprints.emplace_back(f);
+      m_fingerprints.emplace_back(std::move(f));
       return true;
     }
 
