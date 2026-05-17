@@ -2,16 +2,24 @@ DEBUG ?= 1
 
 CXX=g++
 CXXFLAGS=-O1 -std=c++26 -Wall -Wextra --pedantic
-TEST_CXXFLAGS=-lgtest -g
+LDFLAGS=-flto
+TEST_CXXFLAGS=-g
+TEST_LDFLAGS=-lgtest -lgtest_main -pthread
 ifeq ($(DEBUG), 1)
 	CXXFLAGS:=$(CXXFLAGS) -g -DDEBUG
 endif
 LD=g++
 LDFLAGS=-flto -lcrypto
 
+APP_OBJS=$(filter-out $(BUILDDIR)/main.o, $(OBJS))
+
 # macOS config for openssl
-CXXFLAGS += -I/opt/homebrew/opt/openssl@3/include
+CXXFLAGS += -I/opt/homebrew/include
 LDFLAGS += -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto
+
+# macOS config for google tests
+TEST_CXXFLAGS += -I/opt/homebrew/include
+TEST_LDFLAGS += -L/opt/homebrew/lib
 
 EXECUTABLE=cuckoo_filter
 SRCDIR=src
@@ -42,14 +50,14 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
 run_tests: tests
 	@$(BUILDDIR)/tests/run_all
 
-tests: $(OBJS) $(TESTS)
+tests: $(APP_OBJS) $(TESTS)
 	@echo -e $(GRN)"[linking tests] "$(RST) $(notdir $(TESTS))
-	@-$(LD) $(TESTS) $(TEST_CXXFLAGS) -o $(BUILDDIR)/tests/run_all
+	@-$(LD) $(TESTS) $(APP_OBJS) $(LDFLAGS) $(TEST_LDFLAGS) -o $(BUILDDIR)/tests/run_all
 
 $(BUILDDIR)/tests/%.o: $(TESTDIR)/%.cpp
 	@mkdir -p build/tests
 	@echo -e $(GRN)"[compiling test] "$(RST) $<
-	@-$(CXX) -I$(IDIR) $(TEST_CXXFLAGS) -c -o $@ $<
+	@-$(CXX) -I$(IDIR) $(TEST_CXXFLAGS) ${CXXFLAGS} -c -o $@ $<
 
 clean:
 	rm -rf build
