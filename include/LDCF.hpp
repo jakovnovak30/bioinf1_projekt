@@ -42,6 +42,12 @@ public:
     {
         const size_t fp = makeFingerprint(item);
 
+        // Item already in structure, skip inserting
+        if (lookup(item))
+        {
+            return false;
+        }
+
         while (true)
         {
             LDCFLevel<T> &last_level = m_levels.back();
