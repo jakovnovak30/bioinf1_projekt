@@ -7,11 +7,10 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <string>
 #include <sys/types.h>
 #include <vector>
-#include <optional>
 #include <stdexcept>
-#include <iostream>
 
 /**
  * Implementation of CuckooFilter
@@ -190,6 +189,22 @@ public:
     }
   }
 
+  std::string to_string() {
+    std::string out = "";
+
+    for(size_t i=0;i < m_buckets.size();++i)
+    {
+      if (m_buckets[i].is_empty())
+        continue;
+
+      out += "Bucket " + std::to_string(i);
+      out += m_buckets[i].to_string();
+      out += "\n";
+    }
+
+    return std::move(out);
+  }
+
 private:
   /*
    * TODO: opis strukture i metoda
@@ -246,9 +261,32 @@ private:
       return m_fingerprints.size() == m_max_n;
     }
 
+    bool is_empty() const {
+      return m_fingerprints.empty();
+    }
+
     void clear() {
       m_fingerprints.clear();
     }
+
+    std::string to_string() const {
+      std::string out;
+
+      for (auto it = m_fingerprints.begin();
+           it != m_fingerprints.end();++it)
+      {
+        if (it == m_fingerprints.begin())
+          out += "{ ";
+        else
+          out += ", ";
+
+        out += std::to_string(*it);
+      }
+      out += "}";
+
+      return std::move(out);
+    }
+
   private:
     std::vector<uint32_t> m_fingerprints;
     uint8_t m_max_n;

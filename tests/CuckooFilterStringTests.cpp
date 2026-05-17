@@ -52,6 +52,8 @@ TEST_F(CuckooFilterStringTests, TestLookup) {
   ASSERT_NO_THROW(cf.insert("AATTCAAGGAACTGCAGCTTTTAACTGCA"));
   ASSERT_NO_THROW(cf.insert("AGCAGCTGGTTTAACTGCA"));
 
+  std::cout << cf.to_string() << std::endl;
+
   ASSERT_TRUE(cf.lookup("ATTCA"));
   ASSERT_TRUE(cf.lookup("AGGCTTCA"));
   ASSERT_TRUE(cf.lookup("AACTGCA"));
@@ -59,7 +61,7 @@ TEST_F(CuckooFilterStringTests, TestLookup) {
   ASSERT_TRUE(cf.lookup("AATTCAAGGAACTGCAGCTTTTAACTGCA"));
   ASSERT_TRUE(cf.lookup("AGCAGCTGGTTTAACTGCA"));
 
-  ASSERT_FALSE(cf.lookup("ATTCA"));
+  ASSERT_FALSE(cf.lookup("ATTCCA"));
   ASSERT_FALSE(cf.lookup("AGGTTCA"));
   ASSERT_FALSE(cf.lookup("AATTGGTTCA"));
 }
