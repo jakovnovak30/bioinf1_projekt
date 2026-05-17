@@ -1,4 +1,4 @@
-DEBUG ?= 1
+DEBUG ?= 0
 
 CXX=g++
 CXXFLAGS=-O1 -std=c++26 -Wall -Wextra --pedantic
