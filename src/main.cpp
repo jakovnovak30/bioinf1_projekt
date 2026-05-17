@@ -1,6 +1,7 @@
 #include "CuckooFilter.hpp"
 #include "SHA1HashFunction.hpp"
 #include "LDCF.hpp"
+#include "FASTAReader.hpp"
 
 #include <print>
 #include <functional>
@@ -19,7 +20,6 @@ class SimpleHashF : public HashFunction<uint32_t> {
  * Entry point of program
  * TODO: add gtest unit tests for CuckooFilter
  * TODO: add dataset reader
- * TODO: add E. coli datasets
  * TODO: add artificial datasets
  */
 int main() {
@@ -46,6 +46,14 @@ int main() {
 
   std::println("ATTT lookup: {}, ATTC lookup: {}",
       str_filter.lookup("ATTT"), str_filter.lookup("ATTC"));
+
+  // FASTA reader
+  FASTAReader reader ("datasets/artificial/test_read.fasta");
+
+  std::println("Entire file is: {}", reader.read_all());
+  std::println(
+      "Trying to get random subsequence of k=5: {}",
+      reader.read_random(5));
 
   return 0;
 }
