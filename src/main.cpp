@@ -17,7 +17,7 @@ class SimpleHashF : public HashFunction<uint32_t> {
 
 /**
  * Entry point of program
- * TODO: add gtest unit tests for class LDCF and CuckooFilter
+ * TODO: add gtest unit tests for CuckooFilter
  * TODO: add dataset reader
  * TODO: add E. coli datasets
  * TODO: add artificial datasets
