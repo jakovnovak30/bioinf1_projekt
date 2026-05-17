@@ -1,7 +1,9 @@
 #include "CuckooFilter.hpp"
 #include "SHA1HashFunction.hpp"
+#include "LDCF.hpp"
 
 #include <print>
+#include <functional>
 
 class SimpleHashF : public HashFunction<uint32_t> {
   virtual uint64_t hash(const uint32_t &val) const {
@@ -27,6 +29,10 @@ int main() {
   filter.lookup(1);
   filter.del(6);
 
+  LDCF<int> ldcf  = LDCF<int>(ff);
+
+  ldcf.insert(5);
+  std::cout << ldcf.lookup(5);
 
   // // sha1 function
   SHA1HashFunction sha1 = SHA1HashFunction();

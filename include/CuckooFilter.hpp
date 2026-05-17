@@ -42,6 +42,17 @@ public:
   }
 	~CuckooFilter() = default;
 
+  /*
+   * TODO: opis
+   *
+   * @see insert
+   * @author Jakov Novak
+   */
+	void insert(T entry) {
+    uint32_t fingerprint = get_fingerprint(entry);
+    this->insert(entry, fingerprint);
+  }
+
   /**
    * This function inserts an item into the hash table.
    *
@@ -51,8 +62,7 @@ public:
    *
    * @author Jakov Novak
    */
-	void insert(T entry) {
-    uint32_t fingerprint = get_fingerprint(entry);
+	void insert(T entry, uint32_t fingerprint) {
     auto [i1, i2] = get_indices(entry, fingerprint);
 
     /*
@@ -96,6 +106,17 @@ public:
     throw std::runtime_error("Hash table is full!");
 	}
 
+  /*
+   * TODO: opis
+   *
+   * @see lookup
+   * @author Jakov Novak
+   */
+	bool lookup(T entry) const {
+    uint32_t fingerprint = get_fingerprint(entry);
+    return lookup(entry, fingerprint);
+  }
+
   /**
    * This function checks if an item is already in the hash table.
    *
@@ -104,13 +125,23 @@ public:
    *
    * @author Jakov Novak
    */
-	bool lookup(T x) const {
-    uint32_t fingerprint = get_fingerprint(x);
-    auto [i1, i2] = get_indices(x, fingerprint);
+	bool lookup(T entry, uint32_t fingerprint) const {
+    auto [i1, i2] = get_indices(entry, fingerprint);
 
     return 
       m_buckets[i1].contains(fingerprint) ||
       m_buckets[i2].contains(fingerprint);
+  }
+
+  /*
+   * TODO: opis
+   *
+   * @see del
+   * @author Jakov Novak
+   */
+	void del(T entry) {
+    uint32_t fingerprint = get_fingerprint(entry);
+    this->del(entry, fingerprint);
   }
 
   /**
@@ -122,10 +153,8 @@ public:
    *
    * @author Jakov Novak
    */
-	void del(T x) {
-    // upper 32 bits used as fingerprint
-    uint32_t fingerprint = get_fingerprint(x);
-    auto [i1, i2] = get_indices(x, fingerprint);
+	void del(T entry, uint32_t fingerprint) {
+    auto [i1, i2] = get_indices(entry, fingerprint);
 
     if (m_buckets[i1].contains(fingerprint))
     {
@@ -142,9 +171,9 @@ public:
     throw std::runtime_error("Entry is not in filter");
   }
 
-  virtual uint32_t get_fingerprint(T x) const {
+  virtual uint32_t get_fingerprint(T entry) const {
     return
-        m_hash_function(x) & ((1 << m_fingerprint_bits) - 1);
+        m_hash_function(entry) & ((1 << m_fingerprint_bits) - 1);
   }
 
 private:
@@ -207,10 +236,10 @@ private:
     uint8_t m_max_n;
   };
 
-  virtual std::pair<uint32_t, uint32_t> get_indices(T x, uint32_t fingerprint) const {
+  virtual std::pair<uint32_t, uint32_t> get_indices(T entry, uint32_t fingerprint) const {
     T f = m_hash_function.convert_back(fingerprint);
     uint32_t i1, i2;
-    i1 = (uint32_t) (m_hash_function(x) >> 32) % m_num_buckets;
+    i1 = (uint32_t) (m_hash_function(entry) >> 32) % m_num_buckets;
     i2 = (uint32_t) (i1 ^ m_hash_function(f)) % m_num_buckets;
     return { i1, i2 };
   }
