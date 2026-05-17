@@ -1,8 +1,8 @@
 #pragma once
 
+#include "CuckooFilter.hpp"
 #include <cstddef>
 #include <vector>
-#include <CuckooFilter.hpp>
 
 /**
  * Configuration for LDCF structure
