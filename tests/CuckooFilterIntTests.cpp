@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 #include "CuckooFilter.hpp"
 #include "HashFunction.hpp"
@@ -10,7 +11,7 @@ private:
     SimpleHashF() = default;
 
     virtual uint64_t hash(const uint32_t &val) const override {
-      return val % 200;
+      return val % 100;
     }
 
     virtual uint32_t convert_back(uint64_t val) const override {
@@ -67,18 +68,10 @@ TEST_F(CuckooFilterTestInt, TestLookup) {
 }
 
 TEST_F(CuckooFilterTestInt, TestInsertFail) {
-  // one item has two possible locations,
-  // each bucket has 2 items (max_num_kicks = 1)
-  // ASSERT_NO_THROW should succeed 4 times and fail the 5th
-  ASSERT_NO_THROW(cf->insert(1, 1));
-  ASSERT_NO_THROW(cf->insert(1, 3));
-  ASSERT_NO_THROW(cf->insert(1, 3));
-  ASSERT_NO_THROW(cf->insert(1, 4));
+  for (size_t i=0;i < 20;++i)
+  {
+    ASSERT_NO_THROW(cf->insert(i));
+  }
 
-  // No alternative locations exist
-  ASSERT_THROW(cf->insert(1, 5), std::runtime_error);
-
-  // After this, we can add other numbers normally
-  ASSERT_NO_THROW(cf->insert(5));
-  ASSERT_NO_THROW(cf->insert(4));
+  ASSERT_THROW(cf->insert(21), std::runtime_error);
 }

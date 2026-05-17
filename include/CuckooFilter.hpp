@@ -257,7 +257,7 @@ private:
   virtual std::pair<uint32_t, uint32_t> get_indices(T entry, uint32_t fingerprint) const {
     T f = m_hash_function.convert_back(fingerprint);
     uint32_t i1, i2;
-    i1 = (uint32_t) (m_hash_function(entry) >> 32) % m_num_buckets;
+    i1 = (uint32_t) m_hash_function(entry) % m_num_buckets;
     i2 = (uint32_t) (i1 ^ m_hash_function(f)) % m_num_buckets;
     return { i1, i2 };
   }
