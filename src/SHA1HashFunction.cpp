@@ -40,6 +40,6 @@ std::string SHA1HashFunction::convert_back(uint64_t val) const {
   return std::to_string(val);
 }
 
-uint64_t SHA1HashFunction::max_res() const {
+size_t SHA1HashFunction::max_res() const {
   return this->m;
 }

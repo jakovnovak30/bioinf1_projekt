@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 /**
  * Interface for hash functions used by CuckooFilter

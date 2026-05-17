@@ -34,10 +34,10 @@ int main() {
   std::function<uint32_t(uint32_t)> ff = [](uint32_t x) { return x; };
   LDCF<uint32_t> ldcf  = LDCF<uint32_t>(hf, ff);
 
-  ldcf.insert(5);
-  std::cout << ldcf.lookup(5);
+  ldcf.insert(6);
+  std::cout << ldcf.lookup(6);
 
-  // // sha1 function
+  // sha1 function
   SHA1HashFunction sha1 = SHA1HashFunction();
   sha1.hash("ATTC");
   CuckooFilter<std::string> str_filter(sha1, 10, 20);
