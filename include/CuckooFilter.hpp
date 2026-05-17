@@ -39,7 +39,7 @@ public:
       *it = Bucket(m_bucket_size);
     }
   }
-	~CuckooFilter() = default;
+	virtual ~CuckooFilter() = default;
 
   /*
    * TODO: opis

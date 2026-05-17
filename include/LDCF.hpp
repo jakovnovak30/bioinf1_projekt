@@ -126,6 +126,8 @@ public:
                 return false;
             }
         }
+
+        throw std::runtime_error("could not find entry!");
     }
 
     /**
