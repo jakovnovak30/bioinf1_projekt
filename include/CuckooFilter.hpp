@@ -176,6 +176,12 @@ public:
         m_hash_function(entry) & ((1 << m_fingerprint_bits) - 1);
   }
 
+  void clear() {
+    for (auto &bucket : m_buckets) {
+      bucket.clear();
+    }
+  }
+
 private:
   /*
    * TODO: opis strukture i metoda
@@ -230,6 +236,10 @@ private:
 
     bool is_full() const {
       return m_fingerprints.size() == m_max_n;
+    }
+
+    void clear() {
+      m_fingerprints.clear();
     }
   private:
     std::vector<uint32_t> m_fingerprints;

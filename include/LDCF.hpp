@@ -21,7 +21,7 @@ class LDCF
 public:
     typedef std::function<uint32_t(T)> FingerprintFunction;
     LDCF(HashFunction<T> &hash_function,
-         FingerprintFunction &fingerprint_function,
+         FingerprintFunction fingerprint_function,
          const LDCFConfig &config = LDCFConfig())
         : m_config(config),
           m_fingerprint_function(fingerprint_function),
@@ -57,10 +57,9 @@ public:
             }
             catch (const std::runtime_error &e)
             {
+                appendLevel();
                 return false;
             }
-
-            appendLevel();
         }
 
         return false;
@@ -111,13 +110,16 @@ public:
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
 
-            if (level.filters[filter_index]->del(item, stripped_fp))
+            try
             {
+                level.filters[filter_index]->del(item, stripped_fp);
                 return true;
             }
+            catch (const std::runtime_error &e)
+            {
+                return false;
+            }
         }
-
-        return false;
     }
 
     /**
@@ -152,7 +154,7 @@ public:
         {
             for (auto &filter : level.filters)
             {
-                filter.clear();
+                filter->clear();
             }
         }
 
@@ -202,9 +204,9 @@ private:
      * @returns fingerprint of an item
      * @author Stjepan Bonić
      */
-    size_t makeFingerprint(uint64_t hash) const noexcept
+    size_t makeFingerprint(T item) const noexcept
     {
-        size_t fp = m_fingerprint_function(hash);
+        size_t fp = m_fingerprint_function(item);
 
         const size_t bits = m_config.fingerprintBits;
 
