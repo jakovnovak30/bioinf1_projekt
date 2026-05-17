@@ -3,11 +3,7 @@
 
 #include <openssl/evp.h>
 #include <cassert>
-
-SHA1HashFunction::SHA1HashFunction(size_t m) {
-  this->m = m;
-  assert(m > 0);
-}
+#include <string>
 
 // reference implementation:
 // https://pragmaticjoe.gitlab.io/posts/2015-02-09-how-to-generate-a-sha1-hash-in-c/
@@ -37,7 +33,11 @@ uint64_t SHA1HashFunction::hash(const std::string &str) const {
   EVP_cleanup();  
 
   uint64_t hval = *(uint64_t *) md_value;
-  return hval % this->m;
+  return hval;
+}
+
+std::string SHA1HashFunction::convert_back(uint64_t val) const {
+  return std::to_string(val);
 }
 
 uint64_t SHA1HashFunction::max_res() const {

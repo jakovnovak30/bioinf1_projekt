@@ -5,33 +5,35 @@
 
 class CuckooFilterTestInt : public testing::Test {
 private:
-  class SimpleHashF : public HashFunction<int> {
+  class SimpleHashF : public HashFunction<uint32_t> {
   public:
     SimpleHashF() = default;
 
-    virtual size_t hash(const int &val) const override {
-      return val % 11;
+    virtual size_t hash(const uint32_t &val) const override {
+      return val % 200;
+    }
+
+    virtual uint32_t convert_back(uint64_t val) const override {
+      return val;
     }
 
     virtual size_t max_res() const override {
-      return 11;
+      return 200;
     }
   };
 
 protected:
   CuckooFilterTestInt() :
-    hf(SimpleHashF()),
-    ff([](int x) { return x; })
+    hf(SimpleHashF())
   {
-      cf = new CuckooFilter<int>(hf, ff);
+      cf = new CuckooFilter<uint32_t>(hf, 10, 100);
   }
   ~CuckooFilterTestInt()
   {
     delete cf;
   };
 
-  CuckooFilter<int> *cf;
-  CuckooFilter<int>::FingerprintFunction ff;
+  CuckooFilter<uint32_t> *cf;
   SimpleHashF hf;
 };
 

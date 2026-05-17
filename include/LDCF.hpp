@@ -1,4 +1,5 @@
 #pragma once
+#include "HashFunction.hpp"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -16,10 +17,13 @@ template <typename T>
 class LDCF
 {
 public:
-    typedef std::function<T(T)> FingerprintFunction;
-    LDCF(FingerprintFunction &fingerprint_function, const LDCFConfig &config = LDCFConfig())
-        : config(config),
-          fingerprint_function(fingerprint_function)
+    typedef std::function<uint32_t(T)> FingerprintFunction;
+    LDCF(HashFunction<T> &hash_function,
+         FingerprintFunction &fingerprint_function,
+         const LDCFConfig &config = LDCFConfig())
+        : m_config(config),
+          m_fingerprint_function(fingerprint_function),
+          m_hash_function(hash_function)
     {
         appendLevel();
     }
@@ -38,8 +42,8 @@ public:
 
         while (true)
         {
-            LDCFLevel<T> &last_level = levels.back();
-            const size_t level_index = levels.size() - 1;
+            LDCFLevel<T> &last_level = m_levels.back();
+            const size_t level_index = m_levels.size() - 1;
 
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
@@ -71,9 +75,9 @@ public:
     {
         const size_t fp = makeFingerprint(item);
 
-        for (size_t level_index = 0; level_index < levels.size(); level_index++)
+        for (size_t level_index = 0; level_index < m_levels.size(); level_index++)
         {
-            const LDCFLevel<T> &level = levels[level_index];
+            const LDCFLevel<T> &level = m_levels[level_index];
 
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
@@ -98,9 +102,9 @@ public:
     {
         const size_t fp = makeFingerprint(item);
 
-        for (size_t level_index = 0; level_index < levels.size(); level_index++)
+        for (size_t level_index = 0; level_index < m_levels.size(); level_index++)
         {
-            LDCFLevel<T> &level = levels[level_index];
+            LDCFLevel<T> &level = m_levels[level_index];
 
             const size_t filter_index = prefixIndex(fp, level_index);
             const size_t stripped_fp = stripPrefix(fp, level_index);
@@ -121,7 +125,7 @@ public:
      */
     size_t levelCount() const noexcept
     {
-        return levels.size();
+        return m_levels.size();
     }
 
     /**
@@ -131,7 +135,7 @@ public:
      */
     size_t bucketCountPerFilter() const noexcept
     {
-        return config.initialBuckets;
+        return m_config.initialBuckets;
     }
 
     /**
@@ -142,7 +146,7 @@ public:
      */
     void clear()
     {
-        for (LDCFLevel<T> &level : levels)
+        for (LDCFLevel<T> &level : m_levels)
         {
             for (auto &filter : level.filters)
             {
@@ -150,7 +154,7 @@ public:
             }
         }
 
-        levels.clear();
+        m_levels.clear();
         appendLevel();
     }
 
@@ -163,15 +167,15 @@ private:
      */
     void appendLevel()
     {
-        const size_t level_index = levels.size();
+        const size_t level_index = m_levels.size();
         const size_t filter_count = static_cast<size_t>(1ULL << level_index);
 
         LDCFLevel<T> level;
         level.filters.reserve(filter_count);
 
-        for (size_t i = 0; i < filter_count; i++)
+        for (auto it = level.filters.begin(); it != level.filters.end(); ++it)
         {
-            LDCFConfig cf_config = config;
+            LDCFConfig cf_config = m_config;
 
             if (cf_config.fingerprintBits <= level_index)
             {
@@ -181,10 +185,11 @@ private:
 
             cf_config.fingerprintBits -= level_index;
 
-            level.filters.emplace_back(cf_config);
+            // TODO: more config options? or we just use default bucket size, etc.
+            *it = std::make_unique<CuckooFilter<T>>(m_hash_function, cf_config.fingerprintBits);
         }
 
-        levels.push_back(std::move(level));
+        m_levels.emplace_back(std::move(level));
     }
 
     /**
@@ -196,9 +201,9 @@ private:
      */
     size_t makeFingerprint(uint64_t hash) const noexcept
     {
-        size_t fp = fingerprint_function(hash);
+        size_t fp = m_fingerprint_function(hash);
 
-        const size_t bits = config.fingerprintBits;
+        const size_t bits = m_config.fingerprintBits;
 
         const size_t mask = (1ULL << bits) - 1ULL;
 
@@ -227,7 +232,7 @@ private:
             return fp;
         }
 
-        const size_t total_bits = config.fingerprintBits;
+        const size_t total_bits = m_config.fingerprintBits;
         const size_t remaining_bits = total_bits - level;
 
         const size_t mask = (static_cast<size_t>(1ULL << remaining_bits) - 1ULL);
@@ -248,13 +253,15 @@ private:
             return 0;
         }
 
-        const size_t total_bits = config.fingerprintBits;
+        const size_t total_bits = m_config.fingerprintBits;
         const size_t shift = total_bits - level;
 
         return fp >> shift;
     }
 
-    LDCFConfig config;
-    std::vector<LDCFLevel<T>> levels;
-    FingerprintFunction fingerprint_function;
+private:
+    LDCFConfig m_config;
+    std::vector<LDCFLevel<T>> m_levels;
+    FingerprintFunction m_fingerprint_function;
+    HashFunction<T> &m_hash_function;
 };

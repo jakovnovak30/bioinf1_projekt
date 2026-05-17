@@ -3,10 +3,15 @@
 #include "logging.hpp"
 #include "HashFunction.hpp"
 
+#include <algorithm>
 #include <cassert>
-#include <functional>
+#include <cstdint>
+#include <cstdlib>
+#include <sys/types.h>
+#include <vector>
 #include <optional>
 #include <stdexcept>
+#include <iostream>
 
 /**
  * Implementation of CuckooFilter
@@ -15,74 +20,83 @@
  */
 template <typename T> class CuckooFilter {
 public:
-  typedef std::function<T(T)> FingerprintFunction;
-
 	CuckooFilter(HashFunction<T> &hash_function,
-               FingerprintFunction &fingerprint_function,
-               size_t max_num_kicks = 2)
-    : hash_function(hash_function), fingerprint_function(fingerprint_function),
-      max_num_kicks(max_num_kicks)
+               uint8_t fingerprint_bits,
+               uint32_t num_buckets = 1024,
+               uint8_t bucket_size = 4,
+               uint8_t max_num_kicks = 3)
+    : m_fingerprint_bits(fingerprint_bits),
+      m_num_buckets(num_buckets),
+      m_bucket_size(bucket_size),
+      m_max_num_kicks(max_num_kicks),
+      m_hash_function(hash_function)
   {
-    LOG("Setting max bucket size of {}", hash_function.max_res());
-    this->buckets.resize(hash_function.max_res());
+    assert(fingerprint_bits < 32);
 
-    for(size_t i=0;i < this->buckets.size();i++) {
-      this->buckets[i] = std::nullopt;
+    LOG("Setting max bucket size of {}", num_buckets);
+    m_buckets.resize(num_buckets);
+    for (auto it = m_buckets.begin(); it != m_buckets.end();++it)
+    {
+      *it = Bucket(m_bucket_size);
     }
   }
 	~CuckooFilter() = default;
 
+  /*
+   * TODO: opis
+   *
+   * @see insert
+   * @author Jakov Novak
+   */
+	void insert(T entry) {
+    uint32_t fingerprint = get_fingerprint(entry);
+    this->insert(entry, fingerprint);
+  }
+
   /**
    * This function inserts an item into the hash table.
    *
-   * @param x - any hashable type that is to be stored in the filter
+   * @param entry - any hashable type that is to be stored in the filter
    * @return nothing
    * @throws std::runtime_error - if filter hashtable is full
    *
    * @author Jakov Novak
    */
-	void insert(T x, size_t fingerprint = SIZE_MAX) {
-    if (fingerprint == SIZE_MAX) {
-        fingerprint = this->fingerprint_function(x);
-    }
-    size_t i1, i2;
-    i1 = this->hash_function.hash(x);
-    i2 = i1 ^ this->hash_function.hash(fingerprint);
+	void insert(T entry, uint32_t fingerprint) {
+    auto [i1, i2] = get_indices(entry, fingerprint);
 
     /*
      * If either i1 or i2 is empty, just fill them
      */
-    if (!this->buckets[i1].has_value()) {
-      this->buckets[i1] = std::make_optional(fingerprint);
+    if (!m_buckets[i1].is_full()) {
+      m_buckets[i1].insert(fingerprint);
       LOG("Added fingerprint to {}", i1);
       return;
     }
-    else if (!this->buckets[i2].has_value()) {
-      this->buckets[i2] = std::make_optional(fingerprint);
+    else if (!m_buckets[i2].is_full()) {
+      m_buckets[i2].insert(fingerprint);
       LOG("Added fingerprint to {}", i2);
       return;
     }
 
     /*
      * Otherwise, we do main loop for cuckoo hashing
-     * TODO: buckets *can* have multiple entries
      */
     size_t i;
     if (rand() % 2)
       i = i1;
     else
       i = i2;
-    for (size_t n=0;n < this->max_num_kicks;n++) {
+    for (size_t n=0;n < m_max_num_kicks;n++) {
       // get random entry from bucket[i]
-      T e = this->buckets[i].value();
-      // swap fingerprint with e
-      this->buckets[i] = std::make_optional(fingerprint);
-      fingerprint = e;
+      // & swap fingerprint with it
+      fingerprint = m_buckets[i].swap_random(fingerprint);
+
       // calculate next i
-      i = i ^ this->hash_function.hash(fingerprint);
+      i ^= m_hash_function(m_hash_function.convert_back(fingerprint)) % m_num_buckets;
       // check if bucket[i] has empty entry
-      if (!this->buckets[i].has_value()) {
-        this->buckets[i] = std::make_optional(fingerprint);
+      if (!m_buckets[i].is_full()) {
+        m_buckets[i].insert(fingerprint);
         LOG("Added fingerprint to {}", i);
         return;
       }
@@ -92,6 +106,17 @@ public:
     throw std::runtime_error("Hash table is full!");
 	}
 
+  /*
+   * TODO: opis
+   *
+   * @see lookup
+   * @author Jakov Novak
+   */
+	bool lookup(T entry) const {
+    uint32_t fingerprint = get_fingerprint(entry);
+    return lookup(entry, fingerprint);
+  }
+
   /**
    * This function checks if an item is already in the hash table.
    *
@@ -100,20 +125,23 @@ public:
    *
    * @author Jakov Novak
    */
-	bool lookup(T x, size_t fingerprint = SIZE_MAX) const {
-    if (fingerprint == SIZE_MAX) {
-        fingerprint = this->fingerprint_function(x);
-    }
-    size_t i1, i2;
-    i1 = this->hash_function.hash(x);
-    i2 = i1 ^ this->hash_function.hash(fingerprint);
+	bool lookup(T entry, uint32_t fingerprint) const {
+    auto [i1, i2] = get_indices(entry, fingerprint);
 
     return 
-      (this->buckets[i1].has_value()
-       && this->buckets[i1].value() == fingerprint)
-        ||
-      (this->buckets[i2].has_value()
-       && this->buckets[i2].value() == fingerprint);
+      m_buckets[i1].contains(fingerprint) ||
+      m_buckets[i2].contains(fingerprint);
+  }
+
+  /*
+   * TODO: opis
+   *
+   * @see del
+   * @author Jakov Novak
+   */
+	void del(T entry) {
+    uint32_t fingerprint = get_fingerprint(entry);
+    this->del(entry, fingerprint);
   }
 
   /**
@@ -125,27 +153,17 @@ public:
    *
    * @author Jakov Novak
    */
-	void del(T x, size_t fingerprint = SIZE_MAX) {
-    if (fingerprint == SIZE_MAX) {
-        fingerprint = this->fingerprint_function(x);
-    }
-    size_t i1, i2;
-    i1 = this->hash_function.hash(x);
-    i2 = i1 ^ this->hash_function.hash(fingerprint);
+	void del(T entry, uint32_t fingerprint) {
+    auto [i1, i2] = get_indices(entry, fingerprint);
 
-    /**
-     * TODO: support for multiple entries in buckets
-     */
-    if (this->buckets[i1].has_value() &&
-        this->buckets[i1].value() == fingerprint)
+    if (m_buckets[i1].contains(fingerprint))
     {
-      this->buckets[i1] = std::nullopt;
+      m_buckets[i1].remove(fingerprint);
       return;
     }
-    else if (this->buckets[i2].has_value() &&
-        this->buckets[i2].value() == fingerprint)
+    else if (m_buckets[i2].contains(fingerprint))
     {
-      this->buckets[i2] = std::nullopt;
+      m_buckets[i2].remove(fingerprint);
       return;
     }
 
@@ -153,9 +171,83 @@ public:
     throw std::runtime_error("Entry is not in filter");
   }
 
+  virtual uint32_t get_fingerprint(T entry) const {
+    return
+        m_hash_function(entry) & ((1 << m_fingerprint_bits) - 1);
+  }
+
 private:
-  HashFunction<T> &hash_function;
-  FingerprintFunction &fingerprint_function;
-  std::vector<std::optional<T>> buckets;
-  size_t max_num_kicks;
+  /*
+   * TODO: opis strukture i metoda
+   *
+   * @author Jakov Novak
+   */
+  struct Bucket {
+  public:
+    Bucket() = default;
+    Bucket(uint8_t max_n) : m_max_n(max_n) {}
+
+    /*
+     * 
+     */
+    bool try_insert(uint32_t f) {
+      assert (m_fingerprints.size() <= m_max_n);
+
+      if (m_fingerprints.size() == m_max_n)
+        return false;
+
+      m_fingerprints.emplace_back(f);
+      return true;
+    }
+
+    void insert(uint32_t f) {
+      if (!try_insert(f))
+        throw std::runtime_error("bucket could not insert!");
+    }
+
+    void remove(uint32_t f) {
+      auto it = std::find(m_fingerprints.begin(), m_fingerprints.end(), f);
+
+      if (it == m_fingerprints.end())
+        throw std::runtime_error("Cannot remove f as it is not in bucket!");
+
+      m_fingerprints.erase(it);
+    }
+
+    uint32_t swap_random(uint32_t f) {
+      assert(m_fingerprints.size() > 0);
+      size_t index = rand() % m_fingerprints.size();
+
+      uint32_t oldv = m_fingerprints[index];
+      m_fingerprints[index] = f;
+      return oldv;
+    }
+
+    bool contains(uint32_t f) const {
+      auto it = std::find(m_fingerprints.begin(), m_fingerprints.end(), f);
+      return it != m_fingerprints.end();
+    }
+
+    bool is_full() const {
+      return m_fingerprints.size() == m_max_n;
+    }
+  private:
+    std::vector<uint32_t> m_fingerprints;
+    uint8_t m_max_n;
+  };
+
+  virtual std::pair<uint32_t, uint32_t> get_indices(T entry, uint32_t fingerprint) const {
+    T f = m_hash_function.convert_back(fingerprint);
+    uint32_t i1, i2;
+    i1 = (uint32_t) (m_hash_function(entry) >> 32) % m_num_buckets;
+    i2 = (uint32_t) (i1 ^ m_hash_function(f)) % m_num_buckets;
+    return { i1, i2 };
+  }
+
+  uint8_t m_fingerprint_bits;
+  uint32_t m_num_buckets;
+  uint8_t m_bucket_size;
+  uint8_t m_max_num_kicks;
+  HashFunction<T> &m_hash_function;
+  std::vector<Bucket> m_buckets;
 };
