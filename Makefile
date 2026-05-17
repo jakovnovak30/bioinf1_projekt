@@ -9,6 +9,10 @@ endif
 LD=g++
 LDFLAGS=-flto -lcrypto
 
+# macOS config for openssl
+CXXFLAGS += -I/opt/homebrew/opt/openssl@3/include
+LDFLAGS += -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto
+
 EXECUTABLE=cuckoo_filter
 SRCDIR=src
 TESTDIR=tests
