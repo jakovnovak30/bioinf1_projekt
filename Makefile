@@ -17,6 +17,7 @@ BUILDDIR=build
 
 SRCS=$(wildcard $(SRCDIR)/*.cpp)
 OBJS=$(addprefix $(BUILDDIR)/, $(notdir $(SRCS:cpp=o)))
+OBJS_NO_MAIN=$(filter-out $(wildcard $(BUILDDIR)/*main.o), $(OBJS))
 TEST_SRCS=$(wildcard $(TESTDIR)/*.cpp)
 TESTS=$(addprefix $(BUILDDIR)/tests/, $(notdir $(TEST_SRCS:cpp=o)))
 
@@ -38,9 +39,9 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
 run_tests: tests
 	@$(BUILDDIR)/tests/run_all
 
-tests: $(OBJS) $(TESTS)
+tests: $(OBJS_NO_MAIN) $(TESTS)
 	@echo -e $(GRN)"[linking tests] "$(RST) $(notdir $(TESTS))
-	@-$(LD) $(TESTS) $(TEST_CXXFLAGS) -o $(BUILDDIR)/tests/run_all
+	@-$(LD) $(TESTS) $(OBJS_NO_MAIN) $(TEST_CXXFLAGS) $(LDFLAGS) -o $(BUILDDIR)/tests/run_all
 
 $(BUILDDIR)/tests/%.o: $(TESTDIR)/%.cpp
 	@mkdir -p build/tests
