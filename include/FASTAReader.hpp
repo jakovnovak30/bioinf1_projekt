@@ -40,6 +40,7 @@ class FASTAReader {
      *
      * @param k - size of sequence that needs to be returned
      * @return sequence of size k, starting at a random location
+     * @throws std::runtime_error - if k is greater than the genome size
      *
      * @author Jakov Novak
      */

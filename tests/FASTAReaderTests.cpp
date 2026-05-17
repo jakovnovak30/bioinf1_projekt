@@ -1,6 +1,7 @@
 #include "FASTAReader.hpp"
 
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 class FASTAReaderTests : public testing::Test {
   protected:
@@ -12,7 +13,6 @@ class FASTAReaderTests : public testing::Test {
 };
 
 TEST_F(FASTAReaderTests, TestReadAll) {
-  std::cout << reader.read_all() << std::endl;
   ASSERT_EQ(reader.read_all(), "ATTCAGCCAGCCCAATTTTACC");
 }
 
@@ -32,4 +32,12 @@ TEST_F(FASTAReaderTests, TestRead10) {
   ASSERT_NE(r1, r2);
   ASSERT_EQ(r1.length(), 10);
   ASSERT_EQ(r2.length(), 10);
+}
+
+TEST_F(FASTAReaderTests, TestReadTooLong) {
+  ASSERT_NO_THROW(reader.read_random(reader.read_all().length()-1));
+  ASSERT_THROW(
+      reader.read_random(reader.read_all().length()+1),
+      std::runtime_error);
+  ASSERT_THROW(reader.read_random(1000), std::runtime_error);
 }

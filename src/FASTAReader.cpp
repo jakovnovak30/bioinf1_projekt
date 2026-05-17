@@ -34,6 +34,11 @@ std::string FASTAReader::read_all() {
 std::string FASTAReader::read_random(const size_t k) {
   std::string genome = read_all();
 
+  if (genome.length() <= k)
+  {
+    throw std::runtime_error("k is greater than the genome length");
+  }
+
   const size_t max_start = genome.length() - k;
   const size_t seqstart = rand() % max_start;
 
