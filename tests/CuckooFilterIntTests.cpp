@@ -70,7 +70,7 @@ TEST_F(CuckooFilterTestInt, TestLookup) {
 TEST_F(CuckooFilterTestInt, TestInsertFail) {
   for (size_t i=0;i < 20;++i)
   {
-    ASSERT_NO_THROW(cf->insert(i));
+    ASSERT_NO_THROW(cf->insert(i, i));
   }
 
   ASSERT_THROW(cf->insert(21), std::runtime_error);

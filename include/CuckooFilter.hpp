@@ -179,8 +179,9 @@ public:
   }
 
   virtual uint32_t get_fingerprint(T entry) const {
+    // use upper 32 bits for fingerprint, lower 32 for hash table
     return
-        m_hash_function(entry) & ((1 << m_fingerprint_bits) - 1);
+        (m_hash_function(entry) >> 32) & ((1 << m_fingerprint_bits) - 1);
   }
 
   void clear() {
