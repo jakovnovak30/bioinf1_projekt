@@ -18,9 +18,10 @@ class SimpleHashF : public HashFunction<uint32_t> {
 
 /**
  * Entry point of program
- * TODO: add gtest unit tests for CuckooFilter
- * TODO: add dataset reader
+ * TODO: add cli arguments and proper main.cpp
  * TODO: add artificial datasets
+ * TODO: more doxygen comments
+ * TODO: more tests?
  */
 int main() {
   SimpleHashF hf;
