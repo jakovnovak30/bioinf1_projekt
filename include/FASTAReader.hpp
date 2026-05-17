@@ -47,4 +47,5 @@ class FASTAReader {
 
   private:
     std::ifstream m_file;
+    std::string m_genome;
 };

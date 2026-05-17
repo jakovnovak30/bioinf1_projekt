@@ -51,6 +51,7 @@ int main() {
   FASTAReader reader ("datasets/artificial/test_read.fasta");
 
   std::println("Entire file is: {}", reader.read_all());
+  srand(time(NULL));
   std::println(
       "Trying to get random subsequence of k=5: {}",
       reader.read_random(5));
