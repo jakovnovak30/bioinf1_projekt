@@ -17,8 +17,10 @@ class SimpleHashF : public HashFunction<uint32_t> {
 
 /**
  * Entry point of program
- * TODO: add gtest unit tests for class
- * TODO: add support for buckets with multiple entries
+ * TODO: add gtest unit tests for class LDCF and CuckooFilter
+ * TODO: add dataset reader
+ * TODO: add E. coli datasets
+ * TODO: add artificial datasets
  */
 int main() {
   SimpleHashF hf;
