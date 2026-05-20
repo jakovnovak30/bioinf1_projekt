@@ -19,7 +19,6 @@ class SimpleHashF : public HashFunction<uint32_t> {
 /**
  * Entry point of program
  * TODO: add cli arguments and proper main.cpp
- * TODO: add artificial datasets
  * TODO: more doxygen comments
  * TODO: more tests?
  */
