@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Genome.hpp"
+
 #include <random>
 #include <string>
 
@@ -8,7 +10,7 @@
  *
  * @author Stjepan Bonić
  */
-class ArtificialGenomeGenerator
+class ArtificialGenomeGenerator : public Genome
 {
 public:
     /*
@@ -27,7 +29,7 @@ public:
      *
      * @author Stjepan Bonić
      */
-    std::string read_all();
+    virtual std::string read_all() override;
 
     /*
      * Read a random part of the artificial genome of length k
@@ -38,7 +40,7 @@ public:
      *
      * @author Stjepan Bonić
      */
-    std::string read_random(const size_t k);
+    virtual std::string read_random(const size_t k) override;
 
 private:
     std::string m_genome;

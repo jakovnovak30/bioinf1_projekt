@@ -1,3 +1,5 @@
+#include "Genome.hpp"
+
 #include <fstream>
 #include <string>
 
@@ -6,7 +8,7 @@
  *
  * @author Jakov Novak
  */
-class FASTAReader {
+class FASTAReader : public Genome {
   public:
     /*
      * Default constructor which expectes
