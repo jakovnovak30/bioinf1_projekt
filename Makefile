@@ -1,7 +1,7 @@
 DEBUG ?= 0
 
 CXX=g++
-CXXFLAGS=-O1 -std=c++26 -Wall -Wextra --pedantic
+CXXFLAGS=-O2 -std=c++26 -Wall -Wextra --pedantic
 LDFLAGS=-flto
 TEST_CXXFLAGS=-g
 TEST_LDFLAGS=-lgtest -lgtest_main -pthread -lcrypto
