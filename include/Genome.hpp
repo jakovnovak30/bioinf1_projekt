@@ -2,6 +2,7 @@
 
 #include <string>
 
+// TODO: comments
 class Genome {
   public:
     Genome() = default;

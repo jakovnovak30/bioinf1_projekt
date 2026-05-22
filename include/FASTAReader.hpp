@@ -35,7 +35,7 @@ class FASTAReader : public Genome {
      *
      * @author Jakov Novak
      */
-    std::string read_all();
+    virtual std::string read_all() override;
 
     /*
      * Read a random part of the genome of length k
@@ -46,7 +46,7 @@ class FASTAReader : public Genome {
      *
      * @author Jakov Novak
      */
-    std::string read_random(const size_t k);
+    virtual std::string read_random(const size_t k) override;
 
   private:
     std::ifstream m_file;
