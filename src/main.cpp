@@ -10,14 +10,24 @@
 
 // global vars
 static struct {
- std::string in1, in2;
- size_t rand_len = 1024;
- size_t k = 5;
- bool verbose = false;
+  std::string exe_name;
+  std::string in1, in2;
+  size_t rand_len = 1024;
+  size_t k = 5;
+  bool verbose = false;
 } state;
 
 void print_help() {
-  std::println("Usage:");
+  state.exe_name = state.exe_name.substr(state.exe_name.find_last_of("/")+1);
+  std::println("Usage: {} [-h] [-i1] INPUT1 [-i2] INPUT2 [--rand_len] RAND_LEN [-v]", state.exe_name);
+  std::println();
+  std::println("options:");
+  std::println("-h, --help\t print this message");
+  std::println("-i1, --in1\t");
+  std::println("-i2, --in2\t set the first or second input, can be either a filepath or the words \"rand\" or \"random\" for random genome generation");
+  std::println("--rand_len\t set the length of the randomly generated genomes, current is: {}", state.rand_len);
+  std::println("-k\t\t set the length of the subsequences searched, current is: {}", state.k);
+  std::println("-v, --verbose\t set verbose output mode");
 }
 
 char *arg_pop(int *argc, char ***argv) {
@@ -67,13 +77,16 @@ void parse_args(int *argc, char ***argv) {
 #define INIT_GENOME(num) \
   if (state.in##num == "rand" || state.in##num == "random") { \
     gen##num = std::make_unique<ArtificialGenomeGenerator>(state.rand_len); \
+    if (state.verbose) std::println("Loaded genome {} as random generator", num); \
   }\
   else {\
     /* asssume it's a file path if rand is not set */ \
+    if (state.verbose) std::println("Loading genome {} from file: {}", num, state.in##num); \
     gen##num = std::make_unique<FASTAReader>(state.in##num);\
   }
 
 int main(int argc, char **argv) {
+  state.exe_name = *argv;
   argc--;
   argv++;
   while (argc) {
@@ -83,9 +96,6 @@ int main(int argc, char **argv) {
   std::unique_ptr<Genome> gen1, gen2;
   INIT_GENOME(1);
   INIT_GENOME(2);
-
-  std::println("random part of gen1, {}", gen1->read_random(state.k));
-  std::println("random part of gen2, {}", gen2->read_random(state.k));
 
   SHA1HashFunction sha1;
   LDCF<std::string> ldcf(sha1, CuckooFilter<std::string>::get_fingerprint);
