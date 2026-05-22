@@ -28,7 +28,7 @@ private:
     class SimpleFingerprintF
     {
     public:
-        uint32_t operator()(uint64_t val) const
+        uint32_t operator()(const HashFunction<uint32_t> &, const uint32_t val) const
         {
             return static_cast<uint32_t>((val * 2654435761) % 4294967291);
         }

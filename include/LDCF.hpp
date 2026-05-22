@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <functional>
 
+#include "CuckooFilter.hpp"
 #include "HashFunction.hpp"
 #include <LDCFConfig.hpp>
 
@@ -19,7 +20,7 @@ template <typename T>
 class LDCF
 {
 public:
-    typedef std::function<uint32_t(T)> FingerprintFunction;
+    typedef std::function<uint32_t(const HashFunction<T>&, const T)> FingerprintFunction;
     LDCF(HashFunction<T> &hash_function,
          FingerprintFunction fingerprint_function,
          const LDCFConfig &config = LDCFConfig())
@@ -214,7 +215,7 @@ private:
      */
     size_t makeFingerprint(T item) const noexcept
     {
-        size_t fp = m_fingerprint_function(item);
+        size_t fp = m_fingerprint_function(m_hash_function, item);
 
         const size_t bits = m_config.fingerprintBits;
 

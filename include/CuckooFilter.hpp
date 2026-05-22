@@ -20,7 +20,7 @@
 template <typename T> class CuckooFilter {
 public:
 	CuckooFilter(HashFunction<T> &hash_function,
-               uint8_t fingerprint_bits = 10,
+               uint8_t fingerprint_bits = 32,
                uint32_t num_buckets = 1024,
                uint8_t bucket_size = 4,
                uint8_t max_num_kicks = 3)
@@ -30,7 +30,7 @@ public:
       m_max_num_kicks(max_num_kicks),
       m_hash_function(hash_function)
   {
-    assert(fingerprint_bits < 32);
+    assert(fingerprint_bits <= 32);
 
     LOG("Setting max bucket size of {}", num_buckets);
     m_buckets.resize(num_buckets);
@@ -48,7 +48,7 @@ public:
    * @author Jakov Novak
    */
 	void insert(T entry) {
-    uint32_t fingerprint = get_fingerprint(entry);
+    uint32_t fingerprint = get_fingerprint(m_hash_function, entry) & ((1 << m_fingerprint_bits) - 1);
     this->insert(entry, fingerprint);
   }
 
@@ -120,7 +120,7 @@ public:
    * @author Jakov Novak
    */
 	bool lookup(T entry) const {
-    uint32_t fingerprint = get_fingerprint(entry);
+    uint32_t fingerprint = get_fingerprint(m_hash_function, entry) & ((1 << m_fingerprint_bits) - 1);
     return lookup(entry, fingerprint);
   }
 
@@ -147,7 +147,7 @@ public:
    * @author Jakov Novak
    */
 	void del(T entry) {
-    uint32_t fingerprint = get_fingerprint(entry);
+    uint32_t fingerprint = get_fingerprint(m_hash_function, entry) & ((1 << m_fingerprint_bits) - 1);
     this->del(entry, fingerprint);
   }
 
@@ -178,10 +178,9 @@ public:
     throw std::runtime_error("Entry is not in filter");
   }
 
-  virtual uint32_t get_fingerprint(T entry) const {
+  static uint32_t get_fingerprint(const HashFunction<T> &hash_function, const T entry) {
     // use upper 32 bits for fingerprint, lower 32 for hash table
-    return
-        (m_hash_function(entry) >> 32) & ((1 << m_fingerprint_bits) - 1);
+    return hash_function(entry) >> 32;
   }
 
   void clear() {

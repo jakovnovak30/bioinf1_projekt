@@ -1,4 +1,6 @@
+#include "CuckooFilter.hpp"
 #include "LDCF.hpp"
+#include "SHA1HashFunction.hpp"
 #include "FASTAReader.hpp"
 #include "ArtificalGenomeGenerator.hpp"
 
@@ -58,7 +60,6 @@ void parse_args(int *argc, char ***argv) {
 
 /**
  * Entry point of program
- * TODO: add cli arguments and proper main.cpp
  * TODO: more doxygen comments
  * TODO: more tests?
  */
@@ -85,6 +86,9 @@ int main(int argc, char **argv) {
 
   std::println("random part of gen1, {}", gen1->read_random(state.k));
   std::println("random part of gen2, {}", gen2->read_random(state.k));
+
+  SHA1HashFunction sha1;
+  LDCF<std::string> ldcf(sha1, CuckooFilter<std::string>::get_fingerprint);
 
   return 0;
 }
