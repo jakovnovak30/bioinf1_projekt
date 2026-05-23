@@ -20,7 +20,7 @@ template <typename T>
 class LDCF
 {
 public:
-    typedef std::function<uint32_t(const HashFunction<T>&, const T)> FingerprintFunction;
+    typedef std::function<uint32_t(const HashFunction<T> &, const T)> FingerprintFunction;
     LDCF(HashFunction<T> &hash_function,
          FingerprintFunction fingerprint_function,
          const LDCFConfig &config = LDCFConfig())
@@ -65,7 +65,6 @@ public:
             catch (const std::runtime_error &e)
             {
                 appendLevel();
-                return false;
             }
         }
 
