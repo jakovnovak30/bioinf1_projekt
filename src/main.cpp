@@ -71,7 +71,6 @@ void parse_args(int *argc, char ***argv) {
 
 /**
  * Entry point of program
- * TODO: more doxygen comments
  * TODO: more tests?
  */
 
