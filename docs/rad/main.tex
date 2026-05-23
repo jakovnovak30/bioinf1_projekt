@@ -100,7 +100,25 @@ uspoređivanjem k-mera nekog genoma. Umjesto cijelog niza podataka, može se spr
 efikasnost algoritma, ali dolazi i do efekta mogućih lažno negativnih rezultate kod provjere pripadnosti skupu.
 
 \subsubsection{Logarithmic Dynamic Cuckoo Filter}
-TODO: opisi LDCF
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{./slike/slika2.png}
+  \caption{Vizualizacija strukture LDCF-a}
+  \label{ldcf-slika}
+\end{figure}
+
+
+LDCF je zamišljen kao binarno stablo napravljeno od jednog CF-a u svakom čvoru. \ref{ldcf-slika} \cite{ldcf}.
+U početku se nalazi samo jedan CF na nultoj razini te se nakon ispunjenja tog CF-a, odnosno kad metoda \texttt{insert} ne može dodati novi element,
+stvaraju CF-ovi na nižoj razini. Svaki čvor može imati dvoje djece kad se ispuni: jedan CF za elemente kojima \texttt{fingerprint} završava na 0, a
+jedan za elemente kojima završava na 1.
+\\
+Kad imamo takvu strukturu, proces traženja nekog elementa se svodi na provjeru trenutnog CF-a, te ako nije nađen, provjeru njegove djece. S tim da
+u svakom prelasku na sljedeću razinu stabla provjeravamo nulti bit varijable \texttt{fingerprint} te biramo na temelju toga lijevo ili desno dijete, uz
+bitovni pomak (eng. \textit{right shift}) te varijable za jedno mjesto udesno.
+\\
+Funkcionalnosti LDCF-a u usporedbi s obicnim CF-om su jednake, no struktura stabla može ubrzati proces traženja podataka u skupu te ne postoji fiksni
+limit na veličinu skupa koji se može pohraniti.
 
 \subsubsection{Primjer}
 TODO: primjer
@@ -110,7 +128,15 @@ TODO: primjer
 %-------------------------------------------------------------------------------
 \subsection{Implementacija u programskom jeziku C++}
 
-TODO: jos nekaj tu
+Naša implementacija ovih algoritama je ostvarena u programskom jeziku C++. LDCF je implementiran pomoću dva parametrizirana (eng. \textit{template}) razreda: \texttt{CuckooFilter} i \texttt{LDCF}. Ti razredi primaju parametre za veličinu pojedinog indeksa (\textit{bucketa}) te algoritam koji se korisit za računanje sažetka (\textit{hash}), maksimalnu veličinu jednog CF-a, varijablu \texttt{maxNumKicks} te broj bitova u otisku (\textit{fingerprint bits}).
+\\
+U testiranju smo uglavnom koristili instancu tih struktura za \texttt{std::string}. Instancu razreda \texttt{HashFunction} za računanje sažetka za nizova znakova smo implementirali preko SHA1 algoritma. Uzima se zadnjih 64 bitova rezultata SHA1 algoritma, te se podijeli na dva podatka tipa \texttt{uint32}, gornjih 32 bita služe
+za \texttt{fingerprint}, a donjih 32 za prvi indeks u polju, \texttt{i1}. Nakon toga se drugi indeks, \texttt{i2} računa kao bitovni XOR sa sažetkom varijable
+\texttt{fingerprint}.
+\\
+Osim razreda za implementaciju samih struktura koje su potrebne za traženje podnizova, bilo je potrebno i sučelje za čitanje podataka. Glavni razredi za to su: \texttt{Genome}, \texttt{FASTAReader}, \texttt{ArtificialGenomeGenerator}. Razred \texttt{Genome} je apstraktni razred kojega ostali nasljeđuju. Drugi razredi služe za čitanje datoteka u FASTA formatu (u testiranju je to bio E. Coli genom) te generiranje nasumičnih nizova.
+\\
+Uz sve to, implementirano je jednostavno \textit{cli} sučelje kao glavni program kojeg smo testirali. Preko tog sučelja se mogu zadati datoteke koje treba čitati, broj usporedbi, veličina k-mera, te neke dodatne opcije.
 
 %-------------------------------------------------------------------------------
 \subsection{Rezultati testiranja}
