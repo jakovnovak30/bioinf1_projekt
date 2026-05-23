@@ -151,21 +151,6 @@ TEST_F(LDCFTestInt, StressInsertManyElements)
     }
 }
 
-TEST_F(LDCFTestInt, MultipleLevelsConsistency)
-{
-    ldcf.insert(1);
-    ldcf.insert(2);
-    ldcf.insert(3);
-
-    size_t levels = ldcf.levelCount();
-    EXPECT_GE(levels, 1);
-
-    for (size_t i = 0; i < levels; i++)
-    {
-        EXPECT_GE(ldcf.bucketCountPerFilter(), 0);
-    }
-}
-
 TEST_F(LDCFTestInt, RepeatedClearAndReuse)
 {
     for (int round = 0; round < 5; round++)

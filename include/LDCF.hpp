@@ -9,7 +9,7 @@
 
 #include "CuckooFilter.hpp"
 #include "HashFunction.hpp"
-#include <LDCFConfig.hpp>
+#include "LDCFLevel.hpp"
 
 /**
  * Interface for Logarithmic Dynamic Cuckoo Filter structure
@@ -23,8 +23,8 @@ public:
     typedef std::function<uint32_t(const HashFunction<T> &, const T)> FingerprintFunction;
     LDCF(HashFunction<T> &hash_function,
          FingerprintFunction fingerprint_function,
-         const LDCFConfig &config = LDCFConfig())
-        : m_config(config),
+         size_t fingerprint_bits = 16)
+        : fingerprint_bits(fingerprint_bits),
           m_fingerprint_function(fingerprint_function),
           m_hash_function(hash_function)
     {
@@ -141,16 +141,6 @@ public:
     }
 
     /**
-     * Returns number of buckets per filter
-     *
-     * @author Stjepan Bonić
-     */
-    size_t bucketCountPerFilter() const noexcept
-    {
-        return m_config.initialBuckets;
-    }
-
-    /**
      * Clears all items from LDCF structure
      *
      * @returns nothing
@@ -187,19 +177,17 @@ private:
 
         for (size_t i = 0; i < filter_count; i++)
         {
-            LDCFConfig cf_config = m_config;
+            size_t fingerprint_bits_new_level = fingerprint_bits - level_index;
 
-            if (cf_config.fingerprintBits <= level_index)
+            if (fingerprint_bits_new_level <= 0)
             {
                 throw std::runtime_error(
                     "Fingerprint length too small for requested LDCF level");
             }
 
-            cf_config.fingerprintBits -= level_index;
-
             level.filters[i] = std::make_unique<CuckooFilter<T>>(
                 m_hash_function,
-                cf_config.fingerprintBits);
+                fingerprint_bits_new_level);
         }
 
         m_levels.emplace_back(std::move(level));
@@ -216,9 +204,7 @@ private:
     {
         size_t fp = m_fingerprint_function(m_hash_function, item);
 
-        const size_t bits = m_config.fingerprintBits;
-
-        const size_t mask = (1ULL << bits) - 1ULL;
+        const size_t mask = (1ULL << fingerprint_bits) - 1ULL;
 
         fp &= mask;
 
@@ -245,8 +231,7 @@ private:
             return fp;
         }
 
-        const size_t total_bits = m_config.fingerprintBits;
-        const size_t remaining_bits = total_bits - level;
+        const size_t remaining_bits = fingerprint_bits - level;
 
         const size_t mask = (static_cast<size_t>(1ULL << remaining_bits) - 1ULL);
 
@@ -266,14 +251,13 @@ private:
             return 0;
         }
 
-        const size_t total_bits = m_config.fingerprintBits;
-        const size_t shift = total_bits - level;
+        const size_t shift = fingerprint_bits - level;
 
         return fp >> shift;
     }
 
 private:
-    LDCFConfig m_config;
+    size_t fingerprint_bits;
     std::vector<LDCFLevel<T>> m_levels;
     FingerprintFunction m_fingerprint_function;
     HashFunction<T> &m_hash_function;
