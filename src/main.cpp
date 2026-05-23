@@ -102,9 +102,9 @@ int main(int argc, char **argv) {
   LDCF<std::string> ldcf(sha1, CuckooFilter<std::string>::get_fingerprint);
 
   std::string gen1_all = gen1->read_all();
-  for (size_t i=0;i < gen1_all.length();i+=state.k) {
+  for (size_t i=0;i < gen1_all.length();i++) {
     if (i + state.k <= gen1_all.length())
-      ldcf.insert(gen1_all.substr(i, i+state.k));
+      ldcf.insert(gen1_all.substr(i, state.k));
   }
 
   if (state.verbose) std::println("Beginning to search random gen2 seqs in gen1");
@@ -113,6 +113,7 @@ int main(int argc, char **argv) {
     std::string curr = gen2->read_random(state.k);
     if (ldcf.lookup(curr)) {
       std::println("Found {} in genome 1!", curr);
+      std::println("levels: {}", ldcf.levelCount());
     }
   }
 

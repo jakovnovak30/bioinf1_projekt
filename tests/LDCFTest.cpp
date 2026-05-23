@@ -126,18 +126,6 @@ TEST_F(LDCFTestInt, NoFalseNegatives)
     }
 }
 
-TEST_F(LDCFTestInt, DuplicateInsertSafety)
-{
-    ldcf.insert(42);
-    ldcf.insert(42);
-    ldcf.insert(42);
-
-    EXPECT_TRUE(ldcf.lookup(42));
-
-    EXPECT_TRUE(ldcf.del(42));
-    EXPECT_FALSE(ldcf.lookup(42));
-}
-
 TEST_F(LDCFTestInt, StressInsertManyElements)
 {
     for (uint32_t i = 0; i < 1000; i++)

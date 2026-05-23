@@ -21,7 +21,7 @@ template <typename T> class CuckooFilter {
 public:
 	CuckooFilter(HashFunction<T> &hash_function,
                uint8_t fingerprint_bits = 32,
-               uint32_t num_buckets = 1024,
+               uint32_t num_buckets = 32,
                uint8_t bucket_size = 4,
                uint8_t max_num_kicks = 3)
     : m_fingerprint_bits(fingerprint_bits),
@@ -100,7 +100,8 @@ public:
       fingerprint = m_buckets[i].swap_random(fingerprint);
 
       // calculate next i
-      i ^= m_hash_function(m_hash_function.convert_back(fingerprint)) % m_num_buckets;
+      uint32_t fp_hash = fingerprint % m_num_buckets;
+      i = (i ^ fp_hash) % m_num_buckets;
       // check if bucket[i] has empty entry
       if (!m_buckets[i].is_full()) {
         m_buckets[i].insert(fingerprint);
@@ -178,10 +179,12 @@ public:
     throw std::runtime_error("Entry is not in filter");
   }
 
-  static uint32_t get_fingerprint(const HashFunction<T> &hash_function, const T entry) {
-    // use upper 32 bits for fingerprint, lower 32 for hash table
-    return hash_function(entry) >> 32;
-  }
+static uint32_t get_fingerprint(const HashFunction<T> &hash_function, const T entry) {
+    uint64_t h = static_cast<uint64_t>(hash_function(entry));
+    uint32_t fp = static_cast<uint32_t>((h >> 32) ^ (h & 0xFFFFFFFF));
+
+    return fp;
+}
 
   void clear() {
     for (auto &bucket : m_buckets) {
@@ -292,13 +295,15 @@ private:
     uint8_t m_max_n;
   };
 
-  virtual std::pair<uint32_t, uint32_t> get_indices(T entry, uint32_t fingerprint) const {
-    T f = m_hash_function.convert_back(fingerprint);
-    uint32_t i1, i2;
-    i1 = (uint32_t) m_hash_function(entry) % m_num_buckets;
-    i2 = (uint32_t) (i1 ^ m_hash_function(f)) % m_num_buckets;
+virtual std::pair<uint32_t, uint32_t> get_indices(T entry, uint32_t fingerprint) const {
+    uint32_t i1 = (uint32_t) m_hash_function(entry) % m_num_buckets;
+
+    uint32_t fp_hash = fingerprint % m_num_buckets;
+
+    uint32_t i2 = (i1 ^ fp_hash) % m_num_buckets;
+
     return { i1, i2 };
-  }
+}
 
   uint8_t m_fingerprint_bits;
   uint32_t m_num_buckets;

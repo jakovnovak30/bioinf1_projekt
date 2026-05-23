@@ -23,7 +23,7 @@ public:
     typedef std::function<uint32_t(const HashFunction<T> &, const T)> FingerprintFunction;
     LDCF(HashFunction<T> &hash_function,
          FingerprintFunction fingerprint_function,
-         size_t fingerprint_bits = 16)
+         size_t fingerprint_bits = 32)
         : fingerprint_bits(fingerprint_bits),
           m_fingerprint_function(fingerprint_function),
           m_hash_function(hash_function)
@@ -42,12 +42,6 @@ public:
     bool insert(T item)
     {
         const size_t fp = makeFingerprint(item);
-
-        // Item already in structure, skip inserting
-        if (lookup(item))
-        {
-            return false;
-        }
 
         while (true)
         {
@@ -169,7 +163,7 @@ private:
      */
     void appendLevel()
     {
-        const size_t level_index = m_levels.size();
+        const size_t level_index = levelCount();
         const size_t filter_count = static_cast<size_t>(1ULL << level_index);
 
         LDCFLevel<T> level;
