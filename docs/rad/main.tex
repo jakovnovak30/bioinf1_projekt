@@ -7,10 +7,10 @@
 %--- PODACI O RADU / THESIS INFORMATION ----------------------------------------
 
 % Naslov na engleskom jeziku / Title in English
-\title{Logarithmic Cuckoo Filter in Bioinformatics}
+\title{Logarithmic Dynamic Cuckoo Filter in Bioinformatics}
 
 % Naslov na hrvatskom jeziku / Title in Croatian
-\naslov{Logarithmic Cuckoo Filter u bioinformatici}
+\naslov{Logarithmic Dynamic Cuckoo Filter u bioinformatici}
 
 % Autor / Author
 \author{Jakov Novak i Stjepan Bonić}
@@ -42,11 +42,11 @@
 
 % Sažetak na hrvatskom
 \begin{sazetak}
-  TODO: sazetak
+  Logarithmic Dynamic Cuckoo Filter, ili skraćeno LDCF, je naziv za strukturu podataka koja se sastoji od binarnog stabla kojemu su listovi strukture tipa Cuckoo Filter. Cuckoo Filter je struktura podataka inspirana Bloom Filterima, a u općenitom smislu služi za provjeravanje pripadnosti nekom skupu. Ovaj rad opisuje ideju algoritma te jednu njegovu implementaciju zajedno sa usporedbom performansi s drugim sličnim strukturama.
 \end{sazetak}
 
 \begin{kljucnerijeci}
-  bioinformatika; algoritmi; hashing; setovi
+  bioinformatika; algoritmi; hashing; skupovi; binarna stabla
 \end{kljucnerijeci}
 
 
@@ -57,7 +57,18 @@
 %--- UVOD / INTRODUCTION -------------------------------------------------------
 \chapter{Uvod}
 
-TODO: napisi uvod
+LDCF ili Logarithmic Dynamic Cuckoo Filter je probabilistička struktura podataka koja služi za provjeru pripadnosti nekom skupu.
+Struktura sprema samo \textit{otisak} (eng. \textit{fingerprint}) nekog podatka, što povećava performanse algoritma ali i
+donosi potencijalne lažno pozitivne rezultate. Glavne operacije nad ovom strukturom su sljedeće:
+
+\begin{itemize}
+  \item \texttt{insert}, dodavanje novih podataka
+  \item \texttt{delete}, brisanje podataka
+  \item \texttt{lookup}, provjera pripadnosti skupu
+\end{itemize}
+
+Cilj ovog rada je napraviti samostalnu implementaciju Cuckoo Filtera, koji su potrebni jer je LDCF zapravo binarno stablo CF-a,
+te zatim implementirati LDCF i napraviti test na performanse naše implementacije s drugim programima slične funkcionalnosti.
 
 %-------------------------------------------------------------------------------
 \chapter{Glavni dio}
@@ -65,7 +76,34 @@ TODO: napisi uvod
 %-------------------------------------------------------------------------------
 \subsection{Opis algoritma}
 
-TODO: Opis i konkretan primjer algoritma
+\subsubsection{Cuckoo Filter}
+
+Cuckoo Filteri se temelje na ideji \textit{Cuckoo Hashing}, odnosno radi se o \textit{hash} tablicama kod kojih se indeks računa dvaput,
+nakon toga se provjerava je li na jednom od potencijalnih indekse slobodno mjesto. Ako je tome slučaj, podatak se može spremiti na to mjesto, inače
+se izbacuje podatak s jednog indeksa (nasumičnim odabirom) te se njemu traži novo mjesto u tablici (računanjem njegovih alternativnih indeksa). Algoritam
+je inspiriran pticama kukavicama i njihovim ponašanjem, tj. izbacivanjem jaja iz gnijezda u prirodi.
+Ubacivanje novih podataka traje sve dok se ne nađe slobodno mjesto na nekom indeksu, odnosno do nekog limita, koji se u literaturi zove
+\texttt{maxNumKicks}.
+\\
+Cuckoo Filteri su posebna vrsta Cuckoo Hash tablica kod koje se ne sprema podatak na nekom indeksu, već se sprema samo njegov sažetak, koji se naziva
+otisak ili \texttt{fingerprint} u literaturi. Osim toga je moguće spremiti više podataka, odnosno njihovih otisaka na jednom indeksu, pa kažemo da se
+na svakom nalazi jedna "kanta", odnosno \texttt{bucket} u literaturi.
+
+\begin{figure}[H]
+  \includegraphics[width=\linewidth]{./slike/slika1.png}
+  \caption{Vizualizacija strukture Cuckoo Filtera}
+\end{figure}
+  \cite{cuckoofilter}
+\\
+Spremanje otisaka omogućava manje korištenje memorije kod spremanja dugačkih nizova teksta, što je čest slučaj u bioinformatici sa
+uspoređivanjem k-mera nekog genoma. Umjesto cijelog niza podataka, može se spremiti samo broj od 32 ili 64 bita što u praksi povećava
+efikasnost algoritma, ali dolazi i do efekta mogućih lažno negativnih rezultate kod provjere pripadnosti skupu.
+
+\subsubsection{Logarithmic Dynamic Cuckoo Filter}
+TODO: opisi LDCF
+
+\subsubsection{Primjer}
+TODO: primjer
 
 \pagebreak
 
