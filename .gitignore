@@ -2,3 +2,8 @@ build
 compile_commands.json
 docs/html
 docs/latex
+docs/rad/*
+!docs/rad/literatura.bib
+!docs/rad/main.tex
+!docs/rad/fer.cls
+!docs/rad/fer_IEEEtran_HR.bst
