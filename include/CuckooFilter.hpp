@@ -42,7 +42,8 @@ public:
 	virtual ~CuckooFilter() = default;
 
   /*
-   * TODO: opis
+   * Function which inserts an item into hash table,
+   * using default fingerprint calculations.
    *
    * @see insert
    * @author Jakov Novak
@@ -57,6 +58,7 @@ public:
    * This function inserts an item into the hash table.
    *
    * @param entry - any hashable type that is to be stored in the filter
+   * @param fingerprint - fingerprint of the item
    * @return nothing
    * @throws std::runtime_error - if filter hashtable is full
    *
@@ -125,7 +127,7 @@ public:
 	}
 
   /*
-   * TODO: opis
+   * Function to lookup an entry, using default fingerprint.
    *
    * @see lookup
    * @author Jakov Novak
@@ -142,6 +144,7 @@ public:
    * This function checks if an item is already in the hash table.
    *
    * @param entry - value we want to look up
+   * @param fingerprint - fingerprint of the entry
    * @return boolean, true if entry is *possibly* contained in table
    *
    * @author Jakov Novak
@@ -151,7 +154,7 @@ public:
  }
 
   /*
-   * TODO: opis
+   * Function to delete an entry, using default fingerprint.
    *
    * @see del
    * @author Jakov Novak
@@ -178,6 +181,7 @@ void del(T entry, uint32_t fingerprint) {
    * Function that deletes an entry from filter
    *
    * @param entry - value that needs to be deleted from filter
+   * @param fingerprint - fingerprint of the entry
    * @return nothing
    * @throws std::runtime_error - if entry is not in filter
    *
@@ -218,7 +222,8 @@ static uint32_t get_fingerprint(const HashFunction<T> &hash_function, const T en
 
 private:
   /*
-   * TODO: opis strukture i metoda
+   * Structure that models a bucket, which stores
+   * multiple fingerprints at a single CF index.
    *
    * @author Jakov Novak
    */
@@ -228,7 +233,12 @@ private:
     Bucket(uint8_t max_n) : m_max_n(max_n) {}
 
     /*
-     * 
+     * Try to insert a fingerprint into the bucket.
+     *
+     * @param f - fingerprint to be inserted
+     * @return true if item can be inserted, false otherwise
+     * @see insert
+     * @autor Jakov Novak
      */
     bool try_insert(uint32_t f) {
       assert (m_fingerprints.size() <= m_max_n);
@@ -240,11 +250,26 @@ private:
       return true;
     }
 
+    /*
+     * Insert a fingerprint into the bucket.
+     *
+     * @param f - fingerprint to be inserted
+     * @throws std::runtime_error if f can't be inserted
+     * @see try_insert
+     * @autor Jakov Novak
+     */
     void insert(uint32_t f) {
       if (!try_insert(f))
         throw std::runtime_error("bucket could not insert!");
     }
 
+    /*
+     * Remove a fingerprint from the bucket.
+     *
+     * @param f - fingerprint that needs to be removed
+     * @throws std::runtime_error if f is not in bucket
+     * @author Jakov Novak
+     */
     void remove(uint32_t f) {
       auto it = std::find(m_fingerprints.begin(), m_fingerprints.end(), f);
 
@@ -254,6 +279,14 @@ private:
       m_fingerprints.erase(it);
     }
 
+    /*
+     * Swap a fingerprint with a random entry.
+     *
+     * @paramm f - fingerprint to be swapped
+     * @throws assertion error if bucket is empty
+     * @return fingerprint which was swapped with f
+     * @author Jakov Novak
+     */
     uint32_t swap_random(uint32_t f) {
       assert(m_fingerprints.size() > 0);
       size_t index = rand() % m_fingerprints.size();
@@ -263,23 +296,53 @@ private:
       return oldv;
     }
 
+    /*
+     * Check if a given fingerprint is in the bucket.
+     *
+     * @param f - fingerprint which is checked
+     * @return true if f is in bucket, false otherwise
+     * @author Jakov Novak
+     */
     bool contains(uint32_t f) const {
       auto it = std::find(m_fingerprints.begin(), m_fingerprints.end(), f);
       return it != m_fingerprints.end();
     }
 
+    /*
+     * Check if bucket is full.
+     *
+     * @return true is full, false otherwise
+     * @author Jakov Novak
+     */
     bool is_full() const {
       return m_fingerprints.size() == m_max_n;
     }
 
+    /*
+     * Check is bucket is empty.
+     *
+     * @return true if empty, false otherwise
+     * @author Jakov Novak
+     */
     bool is_empty() const {
       return m_fingerprints.empty();
     }
 
+    /*
+     * Erase all fingerprints from bucket.
+     *
+     * @author Jakov Novak
+     */
     void clear() {
       m_fingerprints.clear();
     }
 
+    /*
+     * Get string representation of bucket.
+     * 
+     * @return the contents of this bucket as an std::string
+     * @author Jakov Novak
+     */
     std::string to_string() const {
       std::string out;
 
