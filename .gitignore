@@ -8,3 +8,4 @@ docs/rad/*
 !docs/rad/fer.cls
 !docs/rad/fer_IEEEtran_HR.bst
 !docs/rad/slike
+benchmark.csv

@@ -2,7 +2,6 @@ DEBUG ?= 0
 
 CXX=g++
 CXXFLAGS=-O2 -std=c++26 -Wall -Wextra --pedantic
-LDFLAGS=-flto
 TEST_CXXFLAGS=-g
 TEST_LDFLAGS=-lgtest -lgtest_main -pthread -lcrypto
 ifeq ($(DEBUG), 1)
@@ -25,14 +24,20 @@ ifneq ($(UNAME_S), Linux)
 endif
 
 EXECUTABLE=cuckoo_filter
+BENCHMARK_EXECUTABLE=ldcf_benchmark
 SRCDIR=src
 TESTDIR=tests
 IDIR=include
+BENCHDIR=benchmarks
 BUILDDIR=build
 
 SRCS=$(wildcard $(SRCDIR)/*.cpp)
+BENCHMARK_SRCS=$(wildcard $(BENCHDIR)/*.cpp)
+BENCHMARK_OBJS=$(addprefix $(BUILDDIR)/, $(notdir $(BENCHMARK_SRCS:cpp=o)))
 OBJS=$(addprefix $(BUILDDIR)/, $(notdir $(SRCS:cpp=o)))
-OBJS_NO_MAIN=$(filter-out $(wildcard $(BUILDDIR)/*main.o), $(OBJS))
+OBJS_NO_MAIN=$(filter-out \
+	$(BUILDDIR)/main.o, \
+	$(OBJS))
 TEST_SRCS=$(wildcard $(TESTDIR)/*.cpp)
 TESTS=$(addprefix $(BUILDDIR)/tests/, $(notdir $(TEST_SRCS:cpp=o)))
 
@@ -46,9 +51,19 @@ $(EXECUTABLE): $(OBJS)
 	@echo -e $(GRN)"[linking]" $(RST) $(EXECUTABLE)
 	@-$(LD) $(LDFLAGS) $(OBJS) -o $(BUILDDIR)/$(EXECUTABLE)
 
+$(BENCHMARK_EXECUTABLE): $(OBJS_NO_MAIN) $(BENCHMARK_OBJS)
+	@echo -e $(GRN)"[linking benchmark]" $(RST) $(BENCHMARK_EXECUTABLE)
+	@-$(LD) $(LDFLAGS) $(OBJS_NO_MAIN) $(BENCHMARK_OBJS) \
+		-o $(BUILDDIR)/$(BENCHMARK_EXECUTABLE)
+
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
 	@mkdir -p build
 	@echo -e $(GRN)"[compiling] "$(RST) $<
+	@-$(CXX) -I$(IDIR) $(CXXFLAGS) -c -o $@ $<
+
+$(BUILDDIR)/%.o: $(BENCHDIR)/%.cpp $(wildcard $(IDIR)/*.hpp)
+	@mkdir -p build
+	@echo -e $(GRN)"[compiling benchmark]" $(RST) $<
 	@-$(CXX) -I$(IDIR) $(CXXFLAGS) -c -o $@ $<
 
 run_tests: tests
@@ -76,5 +91,8 @@ cleandocs:
 cleanall:
 	make clean
 	make cleandocs
+
+benchmark: $(BENCHMARK_EXECUTABLE)
+	@$(BUILDDIR)/$(BENCHMARK_EXECUTABLE)
 
 .PHONY: cleanall clean cleandocs docs
