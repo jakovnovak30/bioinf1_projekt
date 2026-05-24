@@ -92,6 +92,9 @@ public:
     /*
      * Otherwise, we do main loop for cuckoo hashing
      */
+    std::vector<SwapOp> log;
+    log.reserve(m_max_num_kicks);
+
     size_t i;
     if (rand() % 2)
       i = i1;
@@ -100,16 +103,26 @@ public:
     for (size_t n=0;n < m_max_num_kicks;n++) {
       // get random entry from bucket[i]
       // & swap fingerprint with it
-      fingerprint = m_buckets[i].swap_random(fingerprint);
+    size_t index = rand() % m_bucket_size;
+    uint32_t evicted = m_buckets[i].m_fingerprints[index];
 
-      // calculate next i
-      i ^= m_hash_function(m_hash_function.convert_back(fingerprint)) % m_num_buckets;
+    log.push_back({i, index, evicted});
+
+    m_buckets[i].m_fingerprints[index] = fingerprint;
+    fingerprint = evicted;
+
+    i ^= m_hash_function(m_hash_function.convert_back(fingerprint)) % m_num_buckets;
       // check if bucket[i] has empty entry
       if (!m_buckets[i].is_full()) {
         m_buckets[i].insert(fingerprint);
         LOG("Added fingerprint to {}", i);
         return;
       }
+  }
+
+    for (auto it = log.rbegin(); it != log.rend(); ++it) {
+        auto &op = *it;
+        m_buckets[op.bucket_index].m_fingerprints[op.slot_index] = op.old_value;
     }
 
     WARN("Hash table is full!");
@@ -211,6 +224,17 @@ public:
   }
 
 private:
+  /**
+   * Structure used for tracking operations on buckets.
+   * Used for rollback on failure for eviction operation.
+   * 
+   * @author Stjepan Bonić
+   */
+  struct SwapOp {
+      size_t bucket_index;
+      size_t slot_index;
+      uint32_t old_value;
+  };
   /*
    * Structure that models a bucket, which stores
    * multiple fingerprints at a single CF index.
@@ -219,6 +243,8 @@ private:
    */
   struct Bucket {
   public:
+    std::vector<uint32_t> m_fingerprints;
+
     Bucket() = default;
     Bucket(uint8_t max_n) : m_max_n(max_n) {}
 
@@ -272,18 +298,17 @@ private:
     /*
      * Swap a fingerprint with a random entry.
      *
+     * @param index - index of entry to be swapped with random one
      * @paramm f - fingerprint to be swapped
      * @throws assertion error if bucket is empty
      * @return fingerprint which was swapped with f
      * @author Jakov Novak
      */
-    uint32_t swap_random(uint32_t f) {
-      assert(m_fingerprints.size() > 0);
-      size_t index = rand() % m_fingerprints.size();
-
-      uint32_t oldv = m_fingerprints[index];
-      m_fingerprints[index] = f;
-      return oldv;
+    uint32_t swap_at(size_t index, uint32_t f)
+    {
+        uint32_t old = m_fingerprints[index];
+        m_fingerprints[index] = f;
+        return old;
     }
 
     /*
@@ -352,7 +377,6 @@ private:
     }
 
   private:
-    std::vector<uint32_t> m_fingerprints;
     uint8_t m_max_n;
   };
 
