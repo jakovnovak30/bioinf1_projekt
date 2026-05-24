@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <print>
 #include <string>
 #include <sys/types.h>
 #include <vector>
@@ -20,8 +21,8 @@
 template <typename T> class CuckooFilter {
 public:
 	CuckooFilter(HashFunction<T> &hash_function,
-               uint8_t fingerprint_bits = 32,
-               uint32_t num_buckets = 1024,
+               uint8_t fingerprint_bits = 16,
+               uint32_t num_buckets = 32,
                uint8_t bucket_size = 4,
                uint8_t max_num_kicks = 3)
     : m_fingerprint_bits(fingerprint_bits),
@@ -30,7 +31,7 @@ public:
       m_max_num_kicks(max_num_kicks),
       m_hash_function(hash_function)
   {
-    assert(fingerprint_bits <= 32);
+    assert(fingerprint_bits < 32);
 
     LOG("Setting max bucket size of {}", num_buckets);
     m_buckets.resize(num_buckets);
