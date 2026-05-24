@@ -173,7 +173,7 @@ private:
         {
             size_t fingerprint_bits_new_level = fingerprint_bits - level_index;
 
-            if (fingerprint_bits_new_level <= 0)
+            if (level_index >= fingerprint_bits)
             {
                 throw std::runtime_error(
                     "Fingerprint length too small for requested LDCF level");

@@ -31,7 +31,7 @@ protected:
       // buckets: 10
       // bucket size: 2
       // max number of kicks: 1
-      cf = new CuckooFilter<uint32_t>(hf, 6, 10, 2, 1);
+      cf = new CuckooFilter<uint32_t>(hf, 16, 16, 2, 10);
   }
   ~CuckooFilterTestInt()
   {
@@ -65,6 +65,19 @@ TEST_F(CuckooFilterTestInt, TestLookup) {
   ASSERT_FALSE(cf->lookup(13));
   ASSERT_FALSE(cf->lookup(7));
   ASSERT_FALSE(cf->lookup(1));
+}
+
+TEST_F(CuckooFilterTestInt, StressInsertManyElements)
+{
+    for (uint32_t i = 0; i < 15; i++)
+    {
+        EXPECT_NO_THROW(cf->insert(i));
+    }
+
+    for (uint32_t i = 0; i < 15; i++)
+    {
+        EXPECT_TRUE(cf->lookup(i));
+    }
 }
 
 TEST_F(CuckooFilterTestInt, TestInsertFail) {
