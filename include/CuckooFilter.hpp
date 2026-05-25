@@ -31,16 +31,21 @@ public:
       m_max_num_kicks(max_num_kicks),
       m_hash_function(hash_function)
   {
-    assert(fingerprint_bits < 32);
+    assert(m_fingerprint_bits < 32);
 
-    LOG("Setting max bucket size of {}", num_buckets);
-    m_buckets.resize(num_buckets);
+    LOG("Setting max bucket size of {}", m_num_buckets);
+
+    m_buckets.resize(m_num_buckets);
     for (auto it = m_buckets.begin(); it != m_buckets.end();++it)
     {
-      *it = Bucket(m_bucket_size);
+      *it = new Bucket(m_bucket_size);
     }
   }
-	virtual ~CuckooFilter() = default;
+	virtual ~CuckooFilter() {
+    for (const Bucket *b : m_buckets) {
+      delete b;
+    }
+  }
 
   /*
    * Function which inserts an item into hash table,
@@ -71,20 +76,20 @@ public:
      * If we already have the fingerprint,
      * return
      */
-    if (m_buckets[i1].contains(fingerprint) ||
-        m_buckets[i2].contains(fingerprint))
+    if (m_buckets[i1]->contains(fingerprint) ||
+        m_buckets[i2]->contains(fingerprint))
       return;
 
     /*
      * If either i1 or i2 is empty, just fill them
      */
-    if (!m_buckets[i1].is_full()) {
-      m_buckets[i1].insert(fingerprint);
+    if (!m_buckets[i1]->is_full()) {
+      m_buckets[i1]->insert(fingerprint);
       LOG("Added fingerprint to {}", i1);
       return;
     }
-    else if (!m_buckets[i2].is_full()) {
-      m_buckets[i2].insert(fingerprint);
+    else if (!m_buckets[i2]->is_full()) {
+      m_buckets[i2]->insert(fingerprint);
       LOG("Added fingerprint to {}", i2);
       return;
     }
@@ -104,17 +109,17 @@ public:
       // get random entry from bucket[i]
       // & swap fingerprint with it
     size_t index = rand() % m_bucket_size;
-    uint32_t evicted = m_buckets[i].m_fingerprints[index];
+    uint32_t evicted = m_buckets[i]->m_fingerprints[index];
 
     log.push_back({i, index, evicted});
 
-    m_buckets[i].m_fingerprints[index] = fingerprint;
+    m_buckets[i]->m_fingerprints[index] = fingerprint;
     fingerprint = evicted;
 
-    i ^= m_hash_function(m_hash_function.convert_back(fingerprint)) % m_num_buckets;
+    i = (i ^ m_hash_function(m_hash_function.convert_back(fingerprint))) % m_num_buckets;
       // check if bucket[i] has empty entry
-      if (!m_buckets[i].is_full()) {
-        m_buckets[i].insert(fingerprint);
+      if (!m_buckets[i]->is_full()) {
+        m_buckets[i]->insert(fingerprint);
         LOG("Added fingerprint to {}", i);
         return;
       }
@@ -122,7 +127,7 @@ public:
 
     for (auto it = log.rbegin(); it != log.rend(); ++it) {
         auto &op = *it;
-        m_buckets[op.bucket_index].m_fingerprints[op.slot_index] = op.old_value;
+        m_buckets[op.bucket_index]->m_fingerprints[op.slot_index] = op.old_value;
     }
 
     WARN("Hash table is full!");
@@ -153,8 +158,8 @@ public:
     auto [i1, i2] = get_indices(entry, fingerprint);
 
     return 
-      m_buckets[i1].contains(fingerprint) ||
-      m_buckets[i2].contains(fingerprint);
+      m_buckets[i1]->contains(fingerprint) ||
+      m_buckets[i2]->contains(fingerprint);
   }
 
   /*
@@ -181,14 +186,14 @@ public:
 	void del(T entry, uint32_t fingerprint) {
     auto [i1, i2] = get_indices(entry, fingerprint);
 
-    if (m_buckets[i1].contains(fingerprint))
+    if (m_buckets[i1]->contains(fingerprint))
     {
-      m_buckets[i1].remove(fingerprint);
+      m_buckets[i1]->remove(fingerprint);
       return;
     }
-    else if (m_buckets[i2].contains(fingerprint))
+    else if (m_buckets[i2]->contains(fingerprint))
     {
-      m_buckets[i2].remove(fingerprint);
+      m_buckets[i2]->remove(fingerprint);
       return;
     }
 
@@ -203,7 +208,7 @@ public:
 
   void clear() {
     for (auto &bucket : m_buckets) {
-      bucket.clear();
+      bucket->clear();
     }
   }
 
@@ -246,7 +251,9 @@ private:
     std::vector<uint32_t> m_fingerprints;
 
     Bucket() = default;
-    Bucket(uint8_t max_n) : m_max_n(max_n) {}
+    Bucket(uint8_t max_n) : m_max_n(max_n) {
+      m_fingerprints.reserve(m_max_n);
+    }
 
     /*
      * Try to insert a fingerprint into the bucket.
@@ -257,10 +264,14 @@ private:
      * @autor Jakov Novak
      */
     bool try_insert(uint32_t f) {
-      assert (m_fingerprints.size() <= m_max_n);
-
       if (m_fingerprints.size() == m_max_n)
         return false;
+
+      if (m_fingerprints.size() >= m_max_n) {
+        std::println("m_fingerprints.size(): {}", m_fingerprints.size());
+        std::println("m_max_n: {}", m_max_n);
+        assert(0);
+      }
 
       m_fingerprints.emplace_back(std::move(f));
       return true;
@@ -393,5 +404,5 @@ private:
   uint8_t m_bucket_size;
   uint8_t m_max_num_kicks;
   HashFunction<T> &m_hash_function;
-  std::vector<Bucket> m_buckets;
+  std::vector<Bucket *> m_buckets;
 };
