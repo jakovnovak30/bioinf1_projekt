@@ -80,7 +80,7 @@ te zatim implementirati LDCF i napraviti test na performanse naše implementacij
 \subsubsection{Cuckoo Filter}
 
 Cuckoo Filteri se temelje na ideji \textit{Cuckoo Hashing}, odnosno radi se o \textit{hash} tablicama kod kojih se indeks računa dvaput,
-nakon toga se provjerava je li na jednom od potencijalnih indekse slobodno mjesto. Ako je tome slučaj, podatak se može spremiti na to mjesto, inače
+nakon toga se provjerava je li na jednom od potencijalnih indeksa slobodno mjesto. Ako je tome slučaj, podatak se može spremiti na to mjesto, inače
 se izbacuje podatak s jednog indeksa (nasumičnim odabirom) te se njemu traži novo mjesto u tablici (računanjem njegovih alternativnih indeksa). Algoritam
 je inspiriran pticama kukavicama i njihovim ponašanjem, tj. izbacivanjem jaja iz gnijezda u prirodi.
 Ubacivanje novih podataka traje sve dok se ne nađe slobodno mjesto na nekom indeksu, odnosno do nekog limita, koji se u literaturi zove
@@ -98,7 +98,7 @@ na svakom nalazi jedna "kanta", odnosno \texttt{bucket} u literaturi.
 \\
 Spremanje otisaka omogućava manje korištenje memorije kod spremanja dugačkih nizova teksta, što je čest slučaj u bioinformatici sa
 uspoređivanjem k-mera nekog genoma. Umjesto cijelog niza podataka, može se spremiti samo broj od 32 ili 64 bita što u praksi povećava
-efikasnost algoritma, ali dolazi i do efekta mogućih lažno negativnih rezultate kod provjere pripadnosti skupu.
+efikasnost algoritma, ali dolazi i do efekta mogućih lažno negativnih rezultata kod provjere pripadnosti skupu.
 
 \subsubsection{Logarithmic Dynamic Cuckoo Filter}
 
@@ -118,7 +118,7 @@ Kad imamo takvu strukturu, proces traženja nekog elementa se svodi na provjeru 
 u svakom prelasku na sljedeću razinu stabla provjeravamo nulti bit varijable \texttt{fingerprint} te biramo na temelju toga lijevo ili desno dijete, uz
 bitovni pomak (eng. \textit{right shift}) te varijable za jedno mjesto udesno.
 \\
-Funkcionalnosti LDCF-a u usporedbi s obicnim CF-om su jednake, no struktura stabla može ubrzati proces traženja podataka u skupu te ne postoji fiksni
+Funkcionalnosti LDCF-a u usporedbi s običnim CF-om su jednake, no struktura stabla može ubrzati proces traženja podataka u skupu te ne postoji fiksni
 limit na veličinu skupa koji se može pohraniti.
 
 \pagebreak
