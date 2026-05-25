@@ -5,6 +5,7 @@
 #include "ArtificalGenomeGenerator.hpp"
 
 #include <cstdlib>
+#include <fstream>
 #include <memory>
 #include <print>
 
@@ -152,10 +153,18 @@ int main(int argc, char **argv) {
 
   if (state.verbose) std::println("Beginning to search random gen2 seqs in gen1");
 
+  std::ofstream ofile (state.output);
+
   for (size_t i=0;i < state.testlimit;i++) {
     std::string curr = gen2->read_random(state.k);
     if (ldcf.lookup(curr)) {
-      std::println("Found {} in genome 1!", curr);
+      if (state.verbose)
+        std::println("Found {} in genome 1!", curr);
+
+      ofile << "[HIT] found " << curr << " from " << state.in2 << " in " << state.in1 << std::endl;
+    }
+    else if (state.verbose) {
+      std::println("Could not find: {} in genome 1", curr);
     }
   }
 
