@@ -266,7 +266,8 @@ int main()
       SHA1HashFunction sha1;
       LDCF<std::string> ldcf(
               sha1,
-              CuckooFilter<std::string>::get_fingerprint);
+              CuckooFilter<std::string>::get_fingerprint,
+              4096);
       std::unordered_set<std::string> inserted_set;
       FASTAReader insert_genome(
           "datasets/ncbi/ecoli.fna");

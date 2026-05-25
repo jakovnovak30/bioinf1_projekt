@@ -25,7 +25,7 @@ public:
     LDCF(HashFunction<T> &hash_function,
          FingerprintFunction fingerprint_function,
          uint32_t num_buckets = 32,
-         uint8_t fingerprint_bits = 16,
+         uint8_t fingerprint_bits = 30,
          uint8_t bucket_size = 4,
          uint8_t max_num_kicks = 3)
         : m_fingerprint_bits(fingerprint_bits),
