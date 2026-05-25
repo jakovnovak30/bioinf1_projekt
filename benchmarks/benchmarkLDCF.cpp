@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstddef>
 #include <vector>
 #include <fstream>
 #include <unordered_set>
@@ -269,29 +270,38 @@ int main()
 {
     constexpr size_t TESTS = 100000;
 
-    constexpr size_t K = 21;
+    size_t Ks[] = {
+      5,
+      10,
+      20,
+      50,
+      100,
+      150,
+      200,
+      300
+    };
 
-    std::vector<size_t> genome_sizes =
+    size_t genome_sizes[] =
         {
-            100,
             500,
             1000,
             5000,
-            10000,
-            50000,
-            100000,
-            250000,
-            500000,
-            1000000};
+            10000
+        };
 
-    for (size_t genome_size : genome_sizes)
+    for (const size_t genome_size : genome_sizes)
     {
+      for (const size_t k : Ks) {
         std::println(
             "\n===== GENOME SIZE: {} =====",
             genome_size);
 
-        ArtificialGenomeGenerator insert_genome(
-            genome_size);
+        std::println(
+            "\n===== CURRENT K: {} =====",
+            k);
+
+        FASTAReader insert_genome(
+            "datasets/ncbi/ecoli.fna");
 
         ArtificialGenomeGenerator query_genome(
             genome_size);
@@ -300,13 +310,14 @@ int main()
             run_benchmark(
                 insert_genome,
                 query_genome,
-                K,
+                k,
                 TESTS);
 
         save_csv(
             result,
             genome_size,
-            K);
+            k);
+      }
     }
 
     return 0;
