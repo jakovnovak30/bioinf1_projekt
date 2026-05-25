@@ -1,10 +1,10 @@
 import csv
 
 import matplotlib.pyplot as plt
-form sys import argv
+import sys
 
 if __name__ == '__main__':
-    with open(argv[0], newline='') as file:
+    with open(sys.argv[1], newline='') as file:
         dict_list = list(csv.DictReader(file))
 
     ks = [
@@ -65,14 +65,20 @@ if __name__ == '__main__':
     # graf za insertion time
     plt.title('Insertion time')
     plt.plot(ks, insertion_times)
+    plt.xlabel('Duljina k-mera')
+    plt.ylabel('Trajanje umetanja u LDCF [ms]')
     plt.show()
 
     # graf memorije
-    plt.title('Koristena memorija')
+    plt.title('Korištena memorija')
     plt.plot(ks, memory_usages)
+    plt.xlabel('Duljina k-mera')
+    plt.ylabel('Veličina LDCF strukture [KB]')
     plt.show()
 
     # graf elemenata
     plt.title('Broj razina LDCF strukture')
     plt.plot(ks, levels, 'bo')
+    plt.xlabel('Duljina k-mera')
+    plt.ylabel('Broj razina u binarnom stablu LDCF-a')
     plt.show()
