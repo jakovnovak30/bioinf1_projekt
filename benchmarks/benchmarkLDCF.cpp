@@ -6,6 +6,7 @@
 #include <memory>
 #include <print>
 #include <sys/resource.h>
+#include <map>
 
 #include "LDCF.hpp"
 #include "CuckooFilter.hpp"
@@ -36,11 +37,10 @@ size_t get_memory_usage_kb()
 }
 
 BenchmarkResult insertion_benchmark(
-    LDCF<std::string> &ldcf,
     const std::string &genome,
-    std::vector<std::string> &inserted,
+    LDCF<std::string> &ldcf,
     std::unordered_set<std::string> &inserted_set,
-    size_t k)
+    const size_t k)
 {
     BenchmarkResult result{};
 
@@ -51,14 +51,8 @@ BenchmarkResult insertion_benchmark(
     {
         std::string kmer = genome.substr(i, k);
 
-        if (!inserted_set.contains(kmer))
-        {
-            inserted.push_back(kmer);
-
-            inserted_set.insert(kmer);
-
-            ldcf.insert(kmer);
-        }
+        inserted_set.insert(kmer);
+        ldcf.insert(kmer);
     }
 
     auto end =
@@ -70,7 +64,7 @@ BenchmarkResult insertion_benchmark(
             .count();
 
     result.inserted_elements =
-        inserted.size();
+        inserted_set.size();
 
     result.levels =
         ldcf.levelCount();
@@ -83,7 +77,7 @@ BenchmarkResult insertion_benchmark(
 
 double lookup_benchmark(
     LDCF<std::string> &ldcf,
-    const std::vector<std::string> &inserted)
+    const std::unordered_set<std::string> &inserted)
 {
     auto start =
         std::chrono::high_resolution_clock::now();
@@ -137,7 +131,7 @@ double false_positive_benchmark(
 
 double false_negative_benchmark(
     LDCF<std::string> &ldcf,
-    const std::vector<std::string> &inserted)
+    const std::unordered_set<std::string> &inserted)
 {
     size_t false_negative = 0;
 
@@ -189,41 +183,22 @@ void save_csv(
 }
 
 BenchmarkResult run_benchmark(
-    Genome &insert_genome,
+    LDCF<std::string> &ldcf,
     Genome &query_genome,
     size_t k,
-    size_t testlimit)
+    size_t testlimit,
+    std::unordered_set<std::string> &inserted_set,
+    BenchmarkResult result)
 {
-    SHA1HashFunction sha1;
-
-    LDCF<std::string> ldcf(
-        sha1,
-        CuckooFilter<std::string>::get_fingerprint);
-
-    std::vector<std::string> inserted;
-
-    std::unordered_set<std::string> inserted_set;
-
-    std::string genome =
-        insert_genome.read_all();
-
-    BenchmarkResult result =
-        insertion_benchmark(
-            ldcf,
-            genome,
-            inserted,
-            inserted_set,
-            k);
-
     result.lookup_ms =
         lookup_benchmark(
             ldcf,
-            inserted);
+            inserted_set);
 
     result.false_negative_rate =
         false_negative_benchmark(
             ldcf,
-            inserted);
+            inserted_set);
 
     result.false_positive_rate =
         false_positive_benchmark(
@@ -276,9 +251,7 @@ int main()
       20,
       50,
       100,
-      150,
-      200,
-      300
+      200
     };
 
     size_t genome_sizes[] =
@@ -289,29 +262,36 @@ int main()
             10000
         };
 
-    for (const size_t genome_size : genome_sizes)
-    {
-      for (const size_t k : Ks) {
+    for (const size_t k : Ks) {
+      SHA1HashFunction sha1;
+      LDCF<std::string> ldcf(
+              sha1,
+              CuckooFilter<std::string>::get_fingerprint);
+      std::unordered_set<std::string> inserted_set;
+      FASTAReader insert_genome(
+          "datasets/ncbi/ecoli.fna");
+      BenchmarkResult result = insertion_benchmark(
+          insert_genome.read_all(),
+          ldcf,
+          inserted_set,
+          k);
+
+      for (const size_t genome_size : genome_sizes) {
         std::println(
+            "\n===== CURRENT K: {} ====="
             "\n===== GENOME SIZE: {} =====",
-            genome_size);
-
-        std::println(
-            "\n===== CURRENT K: {} =====",
-            k);
-
-        FASTAReader insert_genome(
-            "datasets/ncbi/ecoli.fna");
+            k, genome_size);
 
         ArtificialGenomeGenerator query_genome(
             genome_size);
 
-        BenchmarkResult result =
-            run_benchmark(
-                insert_genome,
+        result = run_benchmark(
+                ldcf,
                 query_genome,
                 k,
-                TESTS);
+                TESTS,
+                inserted_set,
+                result);
 
         save_csv(
             result,
