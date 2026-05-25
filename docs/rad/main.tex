@@ -128,13 +128,14 @@ limit na veličinu skupa koji se može pohraniti.
 
 Naša implementacija ovih algoritama je ostvarena u programskom jeziku C++. LDCF je implementiran pomoću dva parametrizirana (eng. \textit{template}) razreda: \texttt{CuckooFilter} i \texttt{LDCF}. Ti razredi primaju parametre za veličinu pojedinog indeksa (\textit{bucketa}) te algoritam koji se korisit za računanje sažetka (\textit{hash}), maksimalnu veličinu jednog CF-a, varijablu \texttt{maxNumKicks} te broj bitova u otisku (\textit{fingerprint bits}).
 \\
-U testiranju smo uglavnom koristili instancu tih struktura za \texttt{std::string}. Instancu razreda \texttt{HashFunction} za računanje sažetka za nizova znakova smo implementirali preko SHA1 algoritma. Uzima se zadnjih 64 bitova rezultata SHA1 algoritma, te se podijeli na dva podatka tipa \texttt{uint32}, gornjih 32 bita služe
+U testiranju smo uglavnom koristili instancu tih struktura za \texttt{std::string}. Instancu razreda \texttt{HashFunction} za računanje sažetka za nizova znakova smo implementirali preko SHA1 algoritma (za koji smo koristli openssl implementaciju). Uzima se zadnjih 64 bitova rezultata SHA1 algoritma, te se podijeli na dva podatka tipa \texttt{uint32}, gornjih 32 bita služe
 za \texttt{fingerprint}, a donjih 32 za prvi indeks u polju, \texttt{i1}. Nakon toga se drugi indeks, \texttt{i2} računa kao bitovni XOR sa sažetkom varijable
 \texttt{fingerprint}.
 \\
 Osim razreda za implementaciju samih struktura koje su potrebne za traženje podnizova, bilo je potrebno i sučelje za čitanje podataka. Glavni razredi za to su: \texttt{Genome}, \texttt{FASTAReader}, \texttt{ArtificialGenomeGenerator}. Razred \texttt{Genome} je apstraktni razred kojega ostali nasljeđuju. Drugi razredi služe za čitanje datoteka u FASTA formatu (u testiranju je to bio E. Coli genom) te generiranje nasumičnih nizova.
 \\
 Uz sve to, implementirano je jednostavno \textit{cli} sučelje kao glavni program kojeg smo testirali. Preko tog sučelja se mogu zadati datoteke koje treba čitati, broj usporedbi, veličina k-mera, te neke dodatne opcije.
+Unit testovi za sve javne razrede su napisani pomoću GTest biblioteke.
 
 %-------------------------------------------------------------------------------
 \subsection{Rezultati testiranja}
