@@ -1,0 +1,253 @@
+\documentclass[seminarskirad]{fer}
+
+
+\usepackage{blindtext}
+\usepackage{float}
+\usepackage{listings}
+
+%--- PODACI O RADU / THESIS INFORMATION ----------------------------------------
+
+% Naslov na engleskom jeziku / Title in English
+\title{Logarithmic Dynamic Cuckoo Filter in Bioinformatics}
+
+% Naslov na hrvatskom jeziku / Title in Croatian
+\naslov{Logarithmic Dynamic Cuckoo Filter u bioinformatici}
+
+% Autor / Author
+\author{Jakov Novak i Stjepan Bonić}
+
+% Mentor 
+\mentor{Prof. dr. sc. Mirjana Domazet-Lošo}
+
+% Datum rada na engleskom jeziku / Date in English
+\date{May, 2025}
+
+% Datum rada na hrvatskom jeziku / Date in Croatian
+\datum{svibanj, 2025.}
+
+%-------------------------------------------------------------------------------
+
+
+\begin{document}
+
+
+% Naslovnica se automatski generira / Titlepage is automatically generated
+\maketitle
+
+
+% Odovud započinje numeriranje stranica / Page numbering starts from here
+\mainmatter
+
+
+%--- SAŽETAK / ABSTRACT --------------------------------------------------------
+
+% Sažetak na hrvatskom
+\begin{sazetak}
+  Logarithmic Dynamic Cuckoo Filter, ili skraćeno LDCF, je naziv za strukturu podataka koja se sastoji od binarnog stabla kojemu su listovi strukture tipa Cuckoo Filter. Cuckoo Filter je struktura podataka inspirana Bloom Filterima, a u općenitom smislu služi za provjeravanje pripadnosti nekom skupu. Ovaj rad opisuje ideju algoritma te jednu njegovu implementaciju zajedno sa usporedbom performansi s drugim sličnim strukturama.
+\end{sazetak}
+
+\begin{kljucnerijeci}
+  bioinformatika; algoritmi; hashing; skupovi; binarna stabla
+\end{kljucnerijeci}
+
+
+% Sadržaj se automatski generira / Table of contents is automatically generated
+\tableofcontents
+
+
+%--- UVOD / INTRODUCTION -------------------------------------------------------
+\chapter{Uvod}
+
+LDCF ili Logarithmic Dynamic Cuckoo Filter je probabilistička struktura podataka koja služi za provjeru pripadnosti nekom skupu.
+Struktura sprema samo \textit{otisak} (eng. \textit{fingerprint}) nekog podatka, što povećava performanse algoritma ali i
+donosi potencijalne lažno pozitivne rezultate. Glavne operacije nad ovom strukturom su sljedeće:
+
+\begin{itemize}
+  \item \texttt{insert}, dodavanje novih podataka
+  \item \texttt{delete}, brisanje podataka
+  \item \texttt{lookup}, provjera pripadnosti skupu
+\end{itemize}
+
+Cilj ovog rada je napraviti samostalnu implementaciju Cuckoo Filtera, koji su potrebni jer je LDCF zapravo binarno stablo CF-a,
+te zatim implementirati LDCF i napraviti test na performanse naše implementacije s drugim programima slične funkcionalnosti.
+
+%-------------------------------------------------------------------------------
+\chapter{Glavni dio}
+
+%-------------------------------------------------------------------------------
+\subsection{Opis algoritma}
+
+\subsubsection{Cuckoo Filter}
+
+Cuckoo Filteri se temelje na ideji \textit{Cuckoo Hashing}, odnosno radi se o \textit{hash} tablicama kod kojih se indeks računa dvaput,
+nakon toga se provjerava je li na jednom od potencijalnih indekse slobodno mjesto. Ako je tome slučaj, podatak se može spremiti na to mjesto, inače
+se izbacuje podatak s jednog indeksa (nasumičnim odabirom) te se njemu traži novo mjesto u tablici (računanjem njegovih alternativnih indeksa). Algoritam
+je inspiriran pticama kukavicama i njihovim ponašanjem, tj. izbacivanjem jaja iz gnijezda u prirodi.
+Ubacivanje novih podataka traje sve dok se ne nađe slobodno mjesto na nekom indeksu, odnosno do nekog limita, koji se u literaturi zove
+\texttt{maxNumKicks}.
+\\
+Cuckoo Filteri su posebna vrsta Cuckoo Hash tablica kod koje se ne sprema podatak na nekom indeksu, već se sprema samo njegov sažetak, koji se naziva
+otisak ili \texttt{fingerprint} u literaturi. Osim toga je moguće spremiti više podataka, odnosno njihovih otisaka na jednom indeksu, pa kažemo da se
+na svakom nalazi jedna "kanta", odnosno \texttt{bucket} u literaturi.
+
+\begin{figure}[H]
+  \includegraphics[width=\linewidth]{./slike/slika1.png}
+  \caption{Vizualizacija strukture Cuckoo Filtera}
+\end{figure}
+  \cite{cuckoofilter}
+\\
+Spremanje otisaka omogućava manje korištenje memorije kod spremanja dugačkih nizova teksta, što je čest slučaj u bioinformatici sa
+uspoređivanjem k-mera nekog genoma. Umjesto cijelog niza podataka, može se spremiti samo broj od 32 ili 64 bita što u praksi povećava
+efikasnost algoritma, ali dolazi i do efekta mogućih lažno negativnih rezultate kod provjere pripadnosti skupu.
+
+\subsubsection{Logarithmic Dynamic Cuckoo Filter}
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{./slike/slika2.png}
+  \caption{Vizualizacija strukture LDCF-a}
+  \label{ldcf-slika}
+\end{figure}
+
+
+LDCF je zamišljen kao binarno stablo napravljeno od jednog CF-a u svakom čvoru. \ref{ldcf-slika} \cite{ldcf}.
+U početku se nalazi samo jedan CF na nultoj razini te se nakon ispunjenja tog CF-a, odnosno kad metoda \texttt{insert} ne može dodati novi element,
+stvaraju CF-ovi na nižoj razini. Svaki čvor može imati dvoje djece kad se ispuni: jedan CF za elemente kojima \texttt{fingerprint} završava na 0, a
+jedan za elemente kojima završava na 1.
+\\
+Kad imamo takvu strukturu, proces traženja nekog elementa se svodi na provjeru trenutnog CF-a, te ako nije nađen, provjeru njegove djece. S tim da
+u svakom prelasku na sljedeću razinu stabla provjeravamo nulti bit varijable \texttt{fingerprint} te biramo na temelju toga lijevo ili desno dijete, uz
+bitovni pomak (eng. \textit{right shift}) te varijable za jedno mjesto udesno.
+\\
+Funkcionalnosti LDCF-a u usporedbi s obicnim CF-om su jednake, no struktura stabla može ubrzati proces traženja podataka u skupu te ne postoji fiksni
+limit na veličinu skupa koji se može pohraniti.
+
+\pagebreak
+
+%-------------------------------------------------------------------------------
+\subsection{Implementacija u programskom jeziku C++}
+
+Naša implementacija ovih algoritama je ostvarena u programskom jeziku C++. LDCF je implementiran pomoću dva parametrizirana (eng. \textit{template}) razreda: \texttt{CuckooFilter} i \texttt{LDCF}. Ti razredi primaju parametre za veličinu pojedinog indeksa (\textit{bucketa}) te algoritam koji se korisit za računanje sažetka (\textit{hash}), maksimalnu veličinu jednog CF-a, varijablu \texttt{maxNumKicks} te broj bitova u otisku (\textit{fingerprint bits}).
+\\
+U testiranju smo uglavnom koristili instancu tih struktura za \texttt{std::string}. Instancu razreda \texttt{HashFunction} za računanje sažetka za nizova znakova smo implementirali preko SHA1 algoritma. Uzima se zadnjih 64 bitova rezultata SHA1 algoritma, te se podijeli na dva podatka tipa \texttt{uint32}, gornjih 32 bita služe
+za \texttt{fingerprint}, a donjih 32 za prvi indeks u polju, \texttt{i1}. Nakon toga se drugi indeks, \texttt{i2} računa kao bitovni XOR sa sažetkom varijable
+\texttt{fingerprint}.
+\\
+Osim razreda za implementaciju samih struktura koje su potrebne za traženje podnizova, bilo je potrebno i sučelje za čitanje podataka. Glavni razredi za to su: \texttt{Genome}, \texttt{FASTAReader}, \texttt{ArtificialGenomeGenerator}. Razred \texttt{Genome} je apstraktni razred kojega ostali nasljeđuju. Drugi razredi služe za čitanje datoteka u FASTA formatu (u testiranju je to bio E. Coli genom) te generiranje nasumičnih nizova.
+\\
+Uz sve to, implementirano je jednostavno \textit{cli} sučelje kao glavni program kojeg smo testirali. Preko tog sučelja se mogu zadati datoteke koje treba čitati, broj usporedbi, veličina k-mera, te neke dodatne opcije.
+
+%-------------------------------------------------------------------------------
+\subsection{Rezultati testiranja}
+
+Sljedeći kod je korišten za prikupljanje podataka o potrošenom vremenu i memoriji naše implementacije:
+
+\begin{lstlisting}[language=C++]
+    size_t Ks[] = {
+      5,
+      10,
+      20,
+      50,
+      100,
+      200
+    };
+
+    size_t genome_sizes[] =
+        {
+            500,
+            1000,
+            5000,
+            10000
+        };
+
+    for (const size_t k : Ks) {
+      SHA1HashFunction sha1;
+      LDCF<std::string> ldcf(
+              sha1,
+              CuckooFilter<std::string>::get_fingerprint);
+      std::unordered_set<std::string> inserted_set;
+      FASTAReader insert_genome(
+          "datasets/ncbi/ecoli.fna");
+      BenchmarkResult result = insertion_benchmark(
+          insert_genome.read_all(),
+          ldcf,
+          inserted_set,
+          k);
+
+      for (const size_t genome_size : genome_sizes) {
+        std::println(
+            "\n===== CURRENT K: {} ====="
+            "\n===== GENOME SIZE: {} =====",
+            k, genome_size);
+
+        ArtificialGenomeGenerator query_genome(
+            genome_size);
+
+        result = run_benchmark(
+                ldcf,
+                query_genome,
+                k,
+                TESTS,
+                inserted_set,
+                result);
+
+        save_csv(
+            result,
+            genome_size,
+            k);
+      }
+    }
+\end{lstlisting}
+
+
+Parametri algoritma kojeg smo koristili za mjerenje performansi su sljedeći:
+
+\begin{itemize}
+  \item \texttt{fingerprint\_bits} = 30
+  \item \texttt{bucket\_size} = 4
+  \item \texttt{max\_num\_kicks} = 3
+  \item \texttt{TESTS} = 100000
+\end{itemize}
+
+Parametar \texttt{num\_buckets} smo mijenjali te s vrijednostima: 32, 512 i 4096 napravili testove kako bismo vidjeli utjecaj veličine pojedinih filtera na krajnje performanse.
+
+\begin{figure}
+  \includegraphics[width=\linewidth/2]{./slike/graphs32/insertion.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs32/lookup.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs32/memory.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs32/levels.png}
+  \caption{Grafovi za \texttt{num\_buckets = 32}}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=\linewidth/2]{./slike/graphs512/insertion.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs512/lookup.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs512/memory.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs512/levels.png}
+  \caption{Grafovi za \texttt{num\_buckets = 512}}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=\linewidth/2]{./slike/graphs4096/insertion.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs4096/lookup.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs4096/memory.png}
+  \includegraphics[width=\linewidth/2]{./slike/graphs4096/levels.png}
+  \caption{Grafovi za \texttt{num\_buckets = 4096}}
+\end{figure}
+
+%-------------------------------------------------------------------------------
+
+%--- ZAKLJUČAK / CONCLUSION ----------------------------------------------------
+\chapter{Zaključak}
+\label{pog:zakljucak}
+
+TODO: zakljucak: komentar na grafove itd.
+\cite{ldcf}
+
+%--- LITERATURA / REFERENCES ---------------------------------------------------
+
+% Literatura se automatski generira / References are automatically generated
+% Upiši ime BibTeX datoteke bez .bib nastavka / Enter the name of the BibTeX file without .bib extension
+\bibliography{literatura}
+
+
+\end{document}
