@@ -208,7 +208,7 @@ Parametri algoritma kojeg smo koristili za mjerenje performansi su sljedeći:
   \item \texttt{TESTS} = 100000
 \end{itemize}
 
-Parametar \texttt{num\_buckets} smo mijenjali te s vrijednostima: 32, 512 i 4096 napravili testove kako bismo vidjeli utjecaj veličine pojedinih filtera na krajnje performanse.
+Parametar \texttt{num\_buckets} smo mijenjali te s vrijednostima: 32, 512 i 4096 napravili testove kako bismo vidjeli utjecaj veličine pojedinih filtera na krajnje performanse. Ostali podaci se nalaze na Github repozitoriju u mapi \textit{benchmark\_data}. Najveći udio lažno pozitivnih rezultata je bio: $0.09 \%$
 
 \begin{figure}
   \includegraphics[width=\linewidth/2]{./slike/graphs32/insertion.png}
@@ -240,7 +240,14 @@ Parametar \texttt{num\_buckets} smo mijenjali te s vrijednostima: 32, 512 i 4096
 \chapter{Zaključak}
 \label{pog:zakljucak}
 
-TODO: zakljucak: komentar na grafove itd.
+Naši grafovi prate rezultate implementacije iz literature, rastom kardinaliteta skupa se usporavaju operacije inserta i lookupa (na logaritamskoj skali). Rast kardinaliteta se događa zbog povećavanja duljine k-mera, odnosno rastom mogućih sekvenci duljine $k$.
+
+Glavna odnosno fingerprinta. Naša implementacija koristi 32-bitne brojeve za spremanje svih otisaka, dok je u njihovoj implementaciji jedan \textit{bucket} predstavljen kao bitovno polje u kojem se uz pomoć raznih bitovnih operacija podese i brišu vrijednosti. Zbog toga naša implementacija koristi puno više memorije od implementacije s literature.
+
+Daljni rad bi trebao biti na poboljšanju memorijske složenosti naše implementacije te još testiranju drugih parametara algoritma.
+Zaključno, LDCF je efikasna struktura koja se temelji na agregiranju određenog broja Cuckoo Filtera u binarno stablo te nam na taj način omogućuje
+brzo pretraživanje velikih skupova podataka, u ovom slučaju podnizova stringova koji predstavljaju k-mere nekog genoma.
+
 \cite{ldcf}
 
 %--- LITERATURA / REFERENCES ---------------------------------------------------
