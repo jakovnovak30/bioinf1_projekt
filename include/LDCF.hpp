@@ -23,8 +23,14 @@ public:
     typedef std::function<uint32_t(const HashFunction<T> &, const T)> FingerprintFunction;
     LDCF(HashFunction<T> &hash_function,
          FingerprintFunction fingerprint_function,
-         size_t fingerprint_bits = 16)
-        : fingerprint_bits(fingerprint_bits),
+         uint32_t num_buckets = 32,
+         uint8_t fingerprint_bits = 16,
+         uint8_t bucket_size = 4,
+         uint8_t max_num_kicks = 3)
+        : m_fingerprint_bits(fingerprint_bits),
+          m_num_buckets(num_buckets),
+          m_bucket_size(bucket_size),
+          m_max_num_kicks(max_num_kicks),
           m_fingerprint_function(fingerprint_function),
           m_hash_function(hash_function)
     {
@@ -177,7 +183,7 @@ private:
 
         for (size_t i = 0; i < filter_count; i++)
         {
-            size_t fingerprint_bits_new_level = fingerprint_bits - level_index;
+            size_t fingerprint_bits_new_level = m_fingerprint_bits - level_index;
 
             if (fingerprint_bits_new_level <= 0)
             {
@@ -187,7 +193,10 @@ private:
 
             level.filters[i] = std::make_unique<CuckooFilter<T>>(
                 m_hash_function,
-                fingerprint_bits_new_level);
+                fingerprint_bits_new_level,
+                m_num_buckets,
+                m_bucket_size,
+                m_max_num_kicks);
         }
 
         m_levels.emplace_back(std::move(level));
@@ -204,7 +213,7 @@ private:
     {
         size_t fp = m_fingerprint_function(m_hash_function, item);
 
-        const size_t mask = (1ULL << fingerprint_bits) - 1ULL;
+        const size_t mask = (1ULL << m_fingerprint_bits) - 1ULL;
 
         fp &= mask;
 
@@ -231,7 +240,7 @@ private:
             return fp;
         }
 
-        const size_t remaining_bits = fingerprint_bits - level;
+        const size_t remaining_bits = m_fingerprint_bits - level;
 
         const size_t mask = (static_cast<size_t>(1ULL << remaining_bits) - 1ULL);
 
@@ -251,13 +260,16 @@ private:
             return 0;
         }
 
-        const size_t shift = fingerprint_bits - level;
+        const size_t shift = m_fingerprint_bits - level;
 
         return fp >> shift;
     }
 
 private:
-    size_t fingerprint_bits;
+    uint8_t m_fingerprint_bits;
+    uint32_t m_num_buckets;
+    uint8_t m_bucket_size;
+    uint8_t m_max_num_kicks;
     std::vector<LDCFLevel<T>> m_levels;
     FingerprintFunction m_fingerprint_function;
     HashFunction<T> &m_hash_function;
